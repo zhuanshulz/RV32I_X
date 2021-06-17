@@ -9,7 +9,7 @@ GCC_TOOL_PATH = /opt/riscv/
 GCC_VERSION =10.2.0
 GCC_FLAGS = -march=rv32ic -O3		# 题目基本要求是32位的整数和压缩指令
 
-TEST_LIST = HelloWorld Dhrystone Float CoreMark
+TEST_LIST = HelloWorld
 
 # Define the test program directory
 ifeq ($(strip $(TEST_DIR)),)
