@@ -1,6 +1,4 @@
-# RV32_I
+# 仿真工具可以选择iverilog
+可以参考该文档进行安装和使用https://blog.csdn.net/whik1194/article/details/103377834 
 
-# RV32_C 
-
-# RV32_M__only 8 instructions
 
