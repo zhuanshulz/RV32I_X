@@ -15,22 +15,23 @@
 // limitations under the License.
 //********************************************************************************
 
-module ccm
+module mem
 (
-   input logic         clk,
-   input logic         rst_n,
+   input          clk,
+   input          rst_n,
                                             
    //DCCM ports
-   input logic         dccm_wren,
-   input logic         dccm_rden,
-   input logic [31:0]  dccm_wr_addr,
-   input logic [31:0]  dccm_wr_data,
-   output logic [31:0] dccm_rd_data;
+   input          dccm_wr_en,
+   input          dccm_rd_en,
+   input  [31:0]  dccm_wr_addr,
+   input  [31:0]  dccm_rd_addr,
+   input  [31:0]  dccm_wr_data,
+   output [31:0] dccm_rd_data,
 
    //ICCM ports
-   input logic [31:0]  iccm_rd_addr,
-   input logic         iccm_rden,
-   output logic [31:0] iccm_rd_data
+   input  [31:0]  iccm_rd_addr,
+   input          iccm_rd_en,
+   output [31:0] iccm_rd_data
 );
    
 

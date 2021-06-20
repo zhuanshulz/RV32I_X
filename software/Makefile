@@ -1,9 +1,9 @@
 
-# 设置为你的工作路径
-export RV_ROOT = /home/damon_devil/RV32I_X
+# 设置为你的工作路径，即RV32I_X的目录
+export RV_ROOT =  
 
 # Allow tool override
-VERILATOR = verilator
+IVERILOG = iverilog
 GCC_PREFIX = riscv32-unknown-elf
 GCC_TOOL_PATH = /opt/riscv/
 GCC_VERSION =10.2.0
@@ -31,10 +31,10 @@ src = $(wildcard $(TEST_DIR)/$(TEST)/*.c)		# 这个代表了测试函数文件�
 obj = $(patsubst %.c, %.o, $(src))				# 这个将文件名后缀从.c改为.o
 
 # Targets
-# all: clean #verilator-run
+all: clean run 
 
-# clean:
-# 	rm -rf 
+clean:
+	rm -rf $(TEST_DIR)/$(TEST)/*.o $(TEST_DIR)/sim_hex/*.hex $(TEST_DIR)/sim_hex/*.dump $(TEST_DIR)/sim_hex/*.elf $(TEST_DIR)/sim_hex/*.o 
 
 %.o: %.c		# 这个规则有点没太看明白; #实际就是每个.o文件依赖相应的.c文件
 	$(GCC_PREFIX)-gcc $(GCC_FLAGS) -I$(TEST_DIR)/include/ -c -o $@ $<
@@ -51,9 +51,11 @@ $(TEST_DIR)/sim_hex/program.hex: $(TEST_DIR)/sim_hex/main.elf	# 依赖的是.elf
 # python $(TEST_DIR)/sim_hex/transform_data.py
 # python $(TEST_DIR)/sim_hex/transform_program.py
 
-verilator-run: $(TEST_DIR)/sim_hex/program.hex		# 依赖程序的二进制文件，启动仿真
+run: $(TEST_DIR)/sim_hex/program.hex		# 依赖程序的二进制文件，启动仿真
 	@echo start compile
-# 	$(VERILATOR) '-UASSERT_ON' --cc -CFLAGS ${CFLAGS} $(defines) $(includes) ${RV_ROOT}/configs/common_defines.vh \
+	$(IVERILOG) -o wave ${TEST_DIR}/../testbench/tb_top.sv -l ${RV_ROOT}/hardware/*.v ${RV_ROOT}/hardware/*/*.v
+	vvp ./wave
+#	$(VERILATOR) '-UASSERT_ON' --cc -CFLAGS ${CFLAGS} $(defines) $(includes) ${RV_ROOT}/configs/common_defines.vh \
 # 		${RV_ROOT}/testbench/tb_top.sv -I${RV_ROOT}/testbench \
 # 		-Werror-PINMISSING -Werror-IMPLICIT -Wno-LITENDIAN -Wno-BLKANDNBLK -Wno-CMPCONST -Wno-CASEINCOMPLETE -Wno-UNOPTFLAT -Wno-WIDTH\
 # 		-f ${RV_ROOT}/testbench/flist.verilator --top-module tb_top -exe test_tb_top.cpp --trace --autoflush --prof-cfuncs
