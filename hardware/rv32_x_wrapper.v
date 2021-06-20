@@ -46,7 +46,7 @@ mem mem_i(
     .dccm_rd_data(dccm_rd_data),
 
     //ICCM ports
-    .iccm_rd_addr(iccm_rd_addr),
+    .iccm_rd_addr({2'b00,iccm_rd_addr[31:2]}),
     .iccm_rd_en(iccm_rd_en),         
     .iccm_rd_data(iccm_rd_data)
 );

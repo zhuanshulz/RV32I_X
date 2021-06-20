@@ -1,13 +1,12 @@
-
 # 设置为你的工作路径，即RV32I_X的目录
-export RV_ROOT =  
+export RV_ROOT =  /home/damon_devil/RV32I_X
 
 # Allow tool override
 IVERILOG = iverilog
 GCC_PREFIX = riscv32-unknown-elf
 GCC_TOOL_PATH = /opt/riscv/
 GCC_VERSION =10.2.0
-GCC_FLAGS = -march=rv32ic -O3		# 题目基本要求是32位的整数和压缩指令
+GCC_FLAGS = -march=rv32i -O3		# 题目基本要求是32位的整数和压缩指令
 
 TEST_LIST = HelloWorld
 
@@ -20,7 +19,6 @@ endif
 ifeq ($(strip $(TEST)),)			# 如果TEST是空的，那么就定义TEST为以下的值。
 	TEST = HelloWorld
 endif
-includes = -I{RV_ROOT}
 
 # CFLAGS for verilator generated Makefiles. Without -std=c++11 it complains for `auto` variables
 CFLAGS += "-std=c++11 -DVL_DEBUG"
@@ -48,20 +46,12 @@ $(TEST_DIR)/sim_hex/program.hex: $(TEST_DIR)/sim_hex/main.elf	# 依赖的是.elf
 	$(GCC_PREFIX)-objdump -D $(TEST_DIR)/sim_hex/main.elf > $(TEST_DIR)/sim_hex/main.dump
 	$(GCC_PREFIX)-objcopy -O verilog --only-section ".data*" --only-section ".rodata*" --only-section ".srodata*" $(TEST_DIR)/sim_hex/main.elf $(TEST_DIR)/sim_hex/data.hex
 	$(GCC_PREFIX)-objcopy -O verilog --only-section ".text*" --set-start=0x0 $(TEST_DIR)/sim_hex/main.elf $(TEST_DIR)/sim_hex/program.hex
-# python $(TEST_DIR)/sim_hex/transform_data.py
-# python $(TEST_DIR)/sim_hex/transform_program.py
+	python $(TEST_DIR)/sim_hex/transform_program.py
 
 run: $(TEST_DIR)/sim_hex/program.hex		# 依赖程序的二进制文件，启动仿真
 	@echo start compile
 	$(IVERILOG) -o wave ${TEST_DIR}/../testbench/tb_top.sv -l ${RV_ROOT}/hardware/*.v ${RV_ROOT}/hardware/*/*.v
 	vvp ./wave
-#	$(VERILATOR) '-UASSERT_ON' --cc -CFLAGS ${CFLAGS} $(defines) $(includes) ${RV_ROOT}/configs/common_defines.vh \
-# 		${RV_ROOT}/testbench/tb_top.sv -I${RV_ROOT}/testbench \
-# 		-Werror-PINMISSING -Werror-IMPLICIT -Wno-LITENDIAN -Wno-BLKANDNBLK -Wno-CMPCONST -Wno-CASEINCOMPLETE -Wno-UNOPTFLAT -Wno-WIDTH\
-# 		-f ${RV_ROOT}/testbench/flist.verilator --top-module tb_top -exe test_tb_top.cpp --trace --autoflush --prof-cfuncs
-# 	cp ${RV_ROOT}/testbench/test_tb_top.cpp obj_dir/
-# 	$(MAKE) -C obj_dir/ -f Vtb_top.mk $(VERILATOR_MAKE_FLAGS) CPP_FLAGS=-DVL_DEBUG
-# 	./obj_dir/Vtb_top
 
 help:
 	@echo Make sure the environment variable RV_ROOT is set.
