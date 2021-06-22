@@ -15,14 +15,14 @@ flush_addr_dec,
 	input flush_from_exe;                   //从执行单元来的分支信号
 	input clk;
 	
-	output [] opcode_dec_2_exe_o;       //操作类型
+	output [6:0] opcode_dec_2_exe_o;       //操作类型
 	output [31:0] rs1_dec_2_exe_o; 			//源操作数1
 	output [31:0] rs2_dec_2_exe_o;			//源操作数2
 	output [4:0] rd_dec_2_exe_o;			//目的寄存器编号
 	output flush_from_dec;				//译码发现分支错误
 	output [] flush_addr_dec; 			//正确的执行地址
-	reg [19:0] imm_a;
-	reg [11:0] imm_b;
+	reg [19:0] imm_20;				//20位立即数
+	reg [11:0] imm_12;				//12位立即数
 	//通用寄存器组
 	reg [31:0] x0;
 	reg [31:0] x1;
@@ -73,23 +73,23 @@ flush_addr_dec,
 				7'b0110111 : 
 					begin 
 						rd_dec_2_exe_o = rd_num;
-						imm_a = imm1;
+						imm_20 = imm1;
 					end
 				7'b0010111 : 
 					begin 
 						rd_dec_2_exe_o = rd_num,
-						a = imm1;
+						imm_20 = imm1;
 					end 
 				7'b1101111 : 
 					begin
 						rd_dec_2_exe_o = rd_num, 
-						imm = {instr_ifu_2_dec_i[20], instr_ifu_2_dec_i[10:1], instr_ifu_2_dec_i[11], instr_ifu_2_dec_i[19:12]};
+						imm_20 = {instr_ifu_2_dec_i[20], instr_ifu_2_dec_i[10:1], instr_ifu_2_dec_i[11], instr_ifu_2_dec_i[19:12]};
 					end 
 				7'b1100111:
 					begin 
 						rd_dec_2_exe_o = rd_num;
 						rs1 = rs1_num;
-						imm_b = imm2;
+						imm_12 = imm2;
 					end 
 				7'b1100011 : 
 					begin 
@@ -98,37 +98,37 @@ flush_addr_dec,
 								begin
 									rs1 = rs1_num;
 									rs2 = rs2_num;
-									immb = {instr_ifu_2_dec_i[12], instr_ifu_2_dec_i[10:5], instr_ifu_2_dec_i[4:1], instr_ifu_2_dec_i[11]};
+									imm_12 = {instr_ifu_2_dec_i[12], instr_ifu_2_dec_i[10:5], instr_ifu_2_dec_i[4:1], instr_ifu_2_dec_i[11]};
 								end 
 							3'b001 :
 								begin 
 									rs1 = rs1_num;
 									rs2 = rs2_num;
-									immb = {instr_ifu_2_dec_i[12], instr_ifu_2_dec_i[10:5], instr_ifu_2_dec_i[4:1], instr_ifu_2_dec_i[11]};
+									imm_12 = {instr_ifu_2_dec_i[12], instr_ifu_2_dec_i[10:5], instr_ifu_2_dec_i[4:1], instr_ifu_2_dec_i[11]};
 								end
 							3'b100：
 								begin 
 									rs1 = rs1_num;
 									rs2 = rs2_num;
-									immb = {instr_ifu_2_dec_i[12], instr_ifu_2_dec_i[10:5], instr_ifu_2_dec_i[4:1], instr_ifu_2_dec_i[11]};
+									imm_12 = {instr_ifu_2_dec_i[12], instr_ifu_2_dec_i[10:5], instr_ifu_2_dec_i[4:1], instr_ifu_2_dec_i[11]};
 								end
 							3'b101:
 								begin 
 									rs1 = rs1_num;
 									rs2 = rs2_num;
-									immb = {instr_ifu_2_dec_i[12], instr_ifu_2_dec_i[10:5], instr_ifu_2_dec_i[4:1], instr_ifu_2_dec_i[11]};
+									imm_12 = {instr_ifu_2_dec_i[12], instr_ifu_2_dec_i[10:5], instr_ifu_2_dec_i[4:1], instr_ifu_2_dec_i[11]};
 								end
 							3'b110:
 								begin 
 									rs1 = rs1_num;
 									rs2 = rs2_num;
-									immb = {instr_ifu_2_dec_i[12], instr_ifu_2_dec_i[10:5], instr_ifu_2_dec_i[4:1], instr_ifu_2_dec_i[11]};
+									imm_12 = {instr_ifu_2_dec_i[12], instr_ifu_2_dec_i[10:5], instr_ifu_2_dec_i[4:1], instr_ifu_2_dec_i[11]};
 								end
 							3'b111:
 								begin 
 									rs1 = rs1_num;
 									rs2 = rs2_num;
-									immb = {instr_ifu_2_dec_i[12], instr_ifu_2_dec_i[10:5], instr_ifu_2_dec_i[4:1], instr_ifu_2_dec_i[11]};
+									imm_12 = {instr_ifu_2_dec_i[12], instr_ifu_2_dec_i[10:5], instr_ifu_2_dec_i[4:1], instr_ifu_2_dec_i[11]};
 								end
 							default
 						endcase
@@ -141,31 +141,31 @@ flush_addr_dec,
 								begin 
 									rd_dec_2_exe_o = rd_num;
 									rs1 = rs1_num;
-									imm_b = imm2;
+									imm_12 = imm2;
 								end
 							3'b001:
 								begin 
 									rd_dec_2_exe_o = rd_num;
 									rs1 = rs1_num;
-									imm_b = imm2;
+									imm_12 = imm2;
 								end
 							3'b010:
 								begin 
 									rd_dec_2_exe_o = rd_num;
 									rs1 = rs1_num;
-									imm_b = imm2;
+									imm_12 = imm2;
 								end
 							3'b100:
 								begin 
 									rd_dec_2_exe_o = rd_num;
 									rs1 = rs1_num;
-									imm_b = imm2;
+									imm_12 = imm2;
 								end
 							3'b101:
 								begin 
 									rd_dec_2_exe_o = rd_num;
 									rs1 = rs1_num;
-									imm_b = imm2;
+									imm_12 = imm2;
 								end
 							default
 						endcase
@@ -177,19 +177,19 @@ flush_addr_dec,
 								begin 
 									rs1 = rs1_num;
 									rs2 = rs2_num;
-									imm_b = {instr_ifu_2_dec_i[31:25], instr_ifu_2_dec_i[11:7]};
+									imm_12 = {instr_ifu_2_dec_i[31:25], instr_ifu_2_dec_i[11:7]};
 								end 
 							3'b001:
 								begin 
 									rs1 = rs1_num;
 									rs2 = rs2_num;
-									imm_b = {instr_ifu_2_dec_i[31:25], instr_ifu_2_dec_i[11:7]};
+									imm_12 = {instr_ifu_2_dec_i[31:25], instr_ifu_2_dec_i[11:7]};
 								end 
 							3'b010:
 								begin 
 									rs1 = rs1_num;
 									rs2 = rs2_num;
-									imm_b = {instr_ifu_2_dec_i[31:25], instr_ifu_2_dec_i[11:7]};
+									imm_12 = {instr_ifu_2_dec_i[31:25], instr_ifu_2_dec_i[11:7]};
 								end 
 							default
 						endcase
@@ -202,47 +202,47 @@ flush_addr_dec,
 								begin
 									rd_dec_2_exe_o = rd_num;
 									rs1 = rs1_num;
-									imm_b = imm2;
+									imm_12 = imm2;
 								end
 							3'b010:
 								begin
 									rd_dec_2_exe_o = rd_num;
 									rs1 = rs1_num;
-									imm_b = imm2;
+									imm_12 = imm2;
 								end
 							3'b011:
 								begin
 									rd_dec_2_exe_o = rd_num;
 									rs1 = rs1_num;
-									imm_b = imm2;
+									imm_12 = imm2;
 								end
 							3'b100:
 								begin
 									rd_dec_2_exe_o = rd_num;
 									rs1 = rs1_num;
-									imm_b = imm2;
+									imm_12 = imm2;
 								end
 							3'b110:
 								begin
 									rd_dec_2_exe_o = rd_num;
 									rs1 = rs1_num;
-									imm_b = imm2;
+									imm_12 = imm2;
 								end
 							3'b111:
 								begin
 									rd_dec_2_exe_o = rd_num;
 									rs1 = rs1_num;
-									imm_b = imm2;
+									imm_12 = imm2;
 								end
 							3'b001:
 								begin
 									rd_dec_2_exe_o = rd_num;
 									rs1 = rs1_num;
 									shamt = instr_ifu_2_dec_i [24:20];
-									imm = 7'b0000000
+									imm_7 = 7'b0000000
 								end
 							3'b101:
-								if (instr_ifu_2_dec_i == 7'b0000000)
+								if (instr_ifu_2_dec_i [31:25] == 7'b0000000)
 									rd_dec_2_exe_o = rd_num;
 									rs1 = rs1_num;
 									shamt = instr_ifu_2_dec_i [24:20];
@@ -272,28 +272,28 @@ flush_addr_dec,
 									rd_dec_2_exe_o = rd_num;
 									rs1 = rs1_num;
 									rs2 = rs2_num;
-									imm = 7'b0000000;
+									imm_7 = 7'b0000000;
 								end 
 							3'b010:
 								begin
 									rd_dec_2_exe_o = rd_num;
 									rs1 = rs1_num;
 									rs2 = rs2_num;
-									imm = 7'b0000000;
+									imm_7 = 7'b0000000;
 								end 
 							3'b011:
 								begin
 									rd_dec_2_exe_o = rd_num;
 									rs1 = rs1_num;
 									rs2 = rs2_num;
-									imm = 7'b0000000;
+									imm_7 = 7'b0000000;
 								end 
 							3'b100:
 								begin
 									rd_dec_2_exe_o = rd_num;
 									rs1 = rs1_num;
 									rs2 = rs2_num;
-									imm = 7'b0000000;
+									imm_7 = 7'b0000000;
 								end 
 							3'b101:
 								begin 
@@ -311,14 +311,14 @@ flush_addr_dec,
 									rd_dec_2_exe_o = rd_num;
 									rs1 = rs1_num;
 									rs2 = rs2_num;
-									imm = 7'b0000000;
+									imm_7 = 7'b0000000;
 								end 
 							3'b111:
 								begin
 									rd_dec_2_exe_o = rd_num;
 									rs1 = rs1_num;
 									rs2 = rs2_num;
-									imm = 7'b0000000;
+									imm_7 = 7'b0000000;
 								end
 							default
 						endcase
@@ -333,7 +333,7 @@ flush_addr_dec,
 					end 
 				7'b1110011:
 					begin
-						if (instr_ifu_2_dec_i == 12'b000000000000)
+						if (instr_ifu_2_dec_i [31:20] == 12'b000000000000)
 							instr_ifu_2_dec_i [11:7] = 5'b00000;
 							instr_ifu_2_dec_i [14:12] = 3'b000;
 							instr_ifu_2_dec_i [19:15] = 5'b00000;
