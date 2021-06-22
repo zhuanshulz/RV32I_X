@@ -12,8 +12,8 @@ initial begin
     $dumpfile("wave.vcd");        //生成的vcd文件名称
     $dumpvars(0, tb_top);    //tb模块名称
 
-    $readmemh("./benchmark/sim_hex/program_iccm.hex" , rv32_x_top.mem_i.iccm.iccm_i0.ram_core       );        // iccm
-    $readmemh("./benchmark/sim_hex/data.hex"    , rv32_x_top.mem_i.dccm.dccm_d0.ram_core       );        // dccm
+    $readmemh("./benchmark/sim_hex/program_iccm.hex" , rv32_x_top.ccm_i.iccm.iccm_i0.ram_core       );        // iccm
+    $readmemh("./benchmark/sim_hex/data_dccm.hex"    , rv32_x_top.ccm_i.dccm.dccm_d0.ram_core       );        // dccm
     #10 rst_n = 1;
     $display("\n simulation begin: \n");
     #10000  $finish();

@@ -15,7 +15,7 @@
 // limitations under the License.
 //********************************************************************************
 
-module mem
+module ccm
 (
    input          clk,
    input          rst_n,

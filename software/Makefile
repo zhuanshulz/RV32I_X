@@ -1,5 +1,5 @@
 # 设置为你的工作路径，即RV32I_X的目录
-export RV_ROOT =  /home/damon_devil/RV32I_X
+export RV_ROOT =  
 
 # Allow tool override
 IVERILOG = iverilog
@@ -47,6 +47,7 @@ $(TEST_DIR)/sim_hex/program.hex: $(TEST_DIR)/sim_hex/main.elf	# 依赖的是.elf
 	$(GCC_PREFIX)-objcopy -O verilog --only-section ".data*" --only-section ".rodata*" --only-section ".srodata*" $(TEST_DIR)/sim_hex/main.elf $(TEST_DIR)/sim_hex/data.hex
 	$(GCC_PREFIX)-objcopy -O verilog --only-section ".text*" --set-start=0x0 $(TEST_DIR)/sim_hex/main.elf $(TEST_DIR)/sim_hex/program.hex
 	python $(TEST_DIR)/sim_hex/transform_program.py
+	python $(TEST_DIR)/sim_hex/transform_data.py
 
 run: $(TEST_DIR)/sim_hex/program.hex		# 依赖程序的二进制文件，启动仿真
 	@echo start compile

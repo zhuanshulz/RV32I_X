@@ -33,7 +33,7 @@ rv32i_x rv32i_x_core(
 );
 
 // Instantiate the mem
-mem mem_i(
+ccm ccm_i(
     .rst_n(rst_n),
     .clk(clk),
                                             
