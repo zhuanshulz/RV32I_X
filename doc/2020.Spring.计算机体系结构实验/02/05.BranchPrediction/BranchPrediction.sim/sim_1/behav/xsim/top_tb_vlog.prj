@@ -1,0 +1,24 @@
+# compile verilog/system verilog design source files
+verilog xil_defaultlib  --include "../../../../BranchPrediction.srcs/sim_1/new" \
+"../../../../BranchPrediction.srcs/sim_1/new/core.v" \
+"../../../../BranchPrediction.srcs/sim_1/new/ctrl.v" \
+"../../../../BranchPrediction.srcs/sim_1/new/data_ram.v" \
+"../../../../BranchPrediction.srcs/sim_1/new/div.v" \
+"../../../../BranchPrediction.srcs/sim_1/new/ex.v" \
+"../../../../BranchPrediction.srcs/sim_1/new/ex_mem.v" \
+"../../../../BranchPrediction.srcs/sim_1/new/id.v" \
+"../../../../BranchPrediction.srcs/sim_1/new/id_ex.v" \
+"../../../../BranchPrediction.srcs/sim_1/new/if_id.v" \
+"../../../../BranchPrediction.srcs/sim_1/new/inst_rom.v" \
+"../../../../BranchPrediction.srcs/sim_1/new/mem.v" \
+"../../../../BranchPrediction.srcs/sim_1/new/mem_wb.v" \
+"../../../../BranchPrediction.srcs/sim_1/new/pc_reg.v" \
+"../../../../BranchPrediction.srcs/sim_1/new/regfile.v" \
+"../../../../BranchPrediction.srcs/sim_1/new/top.v" \
+"../../../../BranchPrediction.srcs/sim_1/new/top_tb.v" \
+
+# compile glbl module
+verilog xil_defaultlib "glbl.v"
+
+# Do not sort compile order
+nosort

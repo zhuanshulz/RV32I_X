@@ -1,0 +1,11 @@
+f = open('inst_rom.mem', 'r')
+f1 = open('data_ram_3.mem', 'w')
+f2 = open('data_ram_2.mem', 'w')
+f3 = open('data_ram_1.mem', 'w')
+f4 = open('data_ram_0.mem', 'w')
+data = f.readlines()
+for dataline in data:
+    f1.write(dataline[0:2]+"\n")
+    f2.write(dataline[2:4]+"\n")
+    f3.write(dataline[4:6]+"\n")
+    f4.write(dataline[6:-1]+"\n")

@@ -1,0 +1,21 @@
+# compile verilog/system verilog design source files
+verilog xil_defaultlib  --include "../../../../DataForwarding.srcs/sources_1/new" \
+"../../../../DataForwarding.srcs/sources_1/new/core.v" \
+"../../../../DataForwarding.srcs/sources_1/new/ex.v" \
+"../../../../DataForwarding.srcs/sources_1/new/ex_mem.v" \
+"../../../../DataForwarding.srcs/sources_1/new/id.v" \
+"../../../../DataForwarding.srcs/sources_1/new/id_ex.v" \
+"../../../../DataForwarding.srcs/sources_1/new/if_id.v" \
+"../../../../DataForwarding.srcs/sources_1/new/inst_rom.v" \
+"../../../../DataForwarding.srcs/sources_1/new/mem.v" \
+"../../../../DataForwarding.srcs/sources_1/new/mem_wb.v" \
+"../../../../DataForwarding.srcs/sources_1/new/pc_reg.v" \
+"../../../../DataForwarding.srcs/sources_1/new/regfile.v" \
+"../../../../DataForwarding.srcs/sources_1/new/top.v" \
+"../../../../DataForwarding.srcs/sources_1/new/top_tb.v" \
+
+# compile glbl module
+verilog xil_defaultlib "glbl.v"
+
+# Do not sort compile order
+nosort

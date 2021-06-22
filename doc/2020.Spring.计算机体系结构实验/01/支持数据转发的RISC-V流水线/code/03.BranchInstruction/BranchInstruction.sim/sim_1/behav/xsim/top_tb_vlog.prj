@@ -1,0 +1,23 @@
+# compile verilog/system verilog design source files
+verilog xil_defaultlib  --include "../../../../BranchInstruction.srcs/sources_1/new" \
+"../../../../BranchInstruction.srcs/sources_1/new/core.v" \
+"../../../../BranchInstruction.srcs/sources_1/new/ctrl.v" \
+"../../../../BranchInstruction.srcs/sources_1/new/div.v" \
+"../../../../BranchInstruction.srcs/sources_1/new/ex.v" \
+"../../../../BranchInstruction.srcs/sources_1/new/ex_mem.v" \
+"../../../../BranchInstruction.srcs/sources_1/new/id.v" \
+"../../../../BranchInstruction.srcs/sources_1/new/id_ex.v" \
+"../../../../BranchInstruction.srcs/sources_1/new/if_id.v" \
+"../../../../BranchInstruction.srcs/sources_1/new/inst_rom.v" \
+"../../../../BranchInstruction.srcs/sources_1/new/mem.v" \
+"../../../../BranchInstruction.srcs/sources_1/new/mem_wb.v" \
+"../../../../BranchInstruction.srcs/sources_1/new/pc_reg.v" \
+"../../../../BranchInstruction.srcs/sources_1/new/regfile.v" \
+"../../../../BranchInstruction.srcs/sources_1/new/top.v" \
+"../../../../BranchInstruction.srcs/sources_1/new/top_tb.v" \
+
+# compile glbl module
+verilog xil_defaultlib "glbl.v"
+
+# Do not sort compile order
+nosort

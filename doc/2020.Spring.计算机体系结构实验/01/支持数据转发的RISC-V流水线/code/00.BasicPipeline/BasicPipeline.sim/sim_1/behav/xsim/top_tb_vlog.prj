@@ -1,0 +1,21 @@
+# compile verilog/system verilog design source files
+verilog xil_defaultlib "F:/MyRVCore/00.BasicPipeline/BasicPipeline.srcs/sources_1/new/defines.vh" --include "../../../../BasicPipeline.srcs/sources_1/new" \
+"../../../../BasicPipeline.srcs/sources_1/new/core.v" \
+"../../../../BasicPipeline.srcs/sources_1/new/ex.v" \
+"../../../../BasicPipeline.srcs/sources_1/new/ex_mem.v" \
+"../../../../BasicPipeline.srcs/sources_1/new/id.v" \
+"../../../../BasicPipeline.srcs/sources_1/new/id_ex.v" \
+"../../../../BasicPipeline.srcs/sources_1/new/if_id.v" \
+"../../../../BasicPipeline.srcs/sources_1/new/inst_rom.v" \
+"../../../../BasicPipeline.srcs/sources_1/new/mem.v" \
+"../../../../BasicPipeline.srcs/sources_1/new/mem_wb.v" \
+"../../../../BasicPipeline.srcs/sources_1/new/pc_reg.v" \
+"../../../../BasicPipeline.srcs/sources_1/new/regfile.v" \
+"../../../../BasicPipeline.srcs/sources_1/new/top.v" \
+"../../../../BasicPipeline.srcs/sources_1/new/top_tb.v" \
+
+# compile glbl module
+verilog xil_defaultlib "glbl.v"
+
+# Do not sort compile order
+nosort
