@@ -52,4 +52,21 @@ ifu ifu_i0(
    ,.flush_addr_dec('d0)
 );
 
+dec dec_i0(
+   .rst_n(rst_n)
+   ,.clk(clk)
+
+   ,.instr_addr_ifu_2_dec_i(instr_location)
+   ,.instr_ifu_2_dec_i(instr_to_dec)
+   ,.flush_from_exe( 'b0 )
+
+   ,.opcode_dec_2_exe_o( )      //操作类型
+   ,.rs1_dec_2_exe_o(   )          //源操作数1
+   ,.rs2_dec_2_exe_o(   )        // 源操作数2
+   ,.imm(  )
+   ,.rd_dec_2_exe_o( )
+   ,.flush_from_dec( )
+   ,.flush_addr_dec( )
+);
+
 endmodule
