@@ -1,6 +1,6 @@
-module exe_alu(
-  input clk;
-  input rstl;
+module exe(
+  input clk,
+  input rstl,
   input [31:0]  opcode_dec_2_exe_i,           // 操作类型,位宽暂定
   input [31:0]   rs1_dec_2_exe_i,             // 源操作数1
   input [31:0]   rs2_dec_2_exe_i,             // 源操作数2

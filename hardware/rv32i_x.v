@@ -63,10 +63,35 @@ dec dec_i0(
    ,.opcode_dec_2_exe_o( )      //操作类型
    ,.rs1_dec_2_exe_o(   )          //源操作数1
    ,.rs2_dec_2_exe_o(   )        // 源操作数2
-   ,.imm(  )
+   ,.imm(  )                  // 20位的立即数，12位立即数也会复用
    ,.rd_dec_2_exe_o( )
    ,.flush_from_dec( )
    ,.flush_addr_dec( )
 );
 
+exe exe_i0(
+   clk(clk)
+   ,.rstl(rst_n)
+   ,.opcode_dec_2_exe_i( )
+   ,.rs1_dec_2_exe_i( )
+   ,.rs2_dec_2_exe_i( )
+   ,.rd_dec_2_exe_i( )
+   ,.current_pc( )
+   ,.imm_12( )
+   ,.imm_7( )
+   ,.imm_5( )
+   ,.offset( )
+   
+   ,.opcode_exe_2_mem_o( )
+   ,.rd_exe_2_mem_o( )
+   ,.rd_data_exe_2_mem_o( )
+   ,.mem_address_o( )
+   ,.men_data_o( )
+   ,.flush_from_exe( )
+   ,.flush_addr_exe( )
+
+   ,.flush_o( )
+   ,.flush_pc( )
+   ,.flush_i( )
+)
 endmodule
