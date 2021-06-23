@@ -11,6 +11,7 @@ module dec (
 	output reg [31:0] rs2_dec_2_exe_o,			//源操作数2
 	output reg [19:0] imm,						//立即书字段
 	output reg [4:0] rd_dec_2_exe_o,			//目的寄存器编号
+	output reg [31:0] instr_addr_dec_2_exe_o,
 
 	output flush_from_dec,					//译码发现分支错误
 	output [31:0] flush_addr_dec 			//正确的执行地址
@@ -55,6 +56,7 @@ module dec (
 				rs2_dec_2_exe_o <= x[rs2];
 				imm <= (|imm_20)?{imm_20}:((|imm_12)?{8'd0,imm_12}:20'd0);
 				rd_dec_2_exe_o <= rd_dec_2_exe;
+				instr_addr_dec_2_exe_o <= instr_addr_ifu_2_dec_i;
 			end
 	end
 
