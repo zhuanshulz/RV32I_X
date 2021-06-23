@@ -1,4 +1,4 @@
-module exe_alu(
+module exe(
   input clk,
   input rstl,
   input [31:0]  opcode_dec_2_exe_i,           // 操作类型,位宽暂定
@@ -16,9 +16,9 @@ module exe_alu(
   output [10:0]   rd_exe_2_mem_o,             // 目的寄存器编号,位宽暂定
   output reg [31:0]   rd_data_exe_2_mem_o,        // 计算结果
   output [31:0]   mem_address_o,              //store指令存储的地址
-  output [31:0]   men_data_o,                 //store指令存储的内容
-  output          flush_from_exe,            // 分支跳转,对于分支指令，使用其计算得到的地址，默认是不跳转
-  output [31:0]   flush_addr_exe             //正确的执行地址
+  output reg [31:0]   men_data_o,                 //store指令存储的内容
+  output reg        flush_from_exe,            // 分支跳转,对于分支指令，使用其计算得到的地址，默认是不跳转
+  output reg [31:0]   flush_addr_exe             //正确的执行地址
 
   //output flush_o,                               //当遇到0作除数，不要了
   //output flush_pc,                            //冲刷流水线时的PC。不要了
@@ -140,6 +140,7 @@ module exe_alu(
   // wire negative_posetive;
   // wire posetive_negetive_com;
   // wire negative_posetive_com;
+  wire imm_12_complement;
   assign result_sum = rs1_dec_2_exe_i +rs2_complement;
   assign imm_12_complement=(~imm_12)+1;//12位的立即数取补码
   assign comparisons_sltu=(rs1_dec_2_exe_i<rs2_dec_2_exe_i)?1:0;
@@ -162,36 +163,39 @@ module exe_alu(
   // assign negative_posetive_com=negative_posetive:0:1;
   // assign comparisons_slti=(opcode_dec_2_exe_i==SLTI)?
 
-  wire rs1_s;
-  assign rs1_s={rs1_dec_2_exe_i[31]};
-  wire  rs2_s;
-  assign rs2_s={rs2_dec_2_exe_i[31]};
+  // reg rs1_s;
+  // assign rs1_s={rs1_dec_2_exe_i[31]};
+  // reg rs2_s;
+  // assign rs2_s={rs2_dec_2_exe_i[31]};
 
-  if(rs1_s&rs2_s)begin
-    assign comparisons_slti= rs1_dec_2_exe_i[30:0]>rs2_dec_2_exe_i?1:0;
-  end
-  else if (~(rs1_s&rs2_s))begin
-    assign comparisons_slti=rs1_dec_2_exe_i<rs2_dec_2_exe_i?1:0;
-  end                     
-  else if (rs1_s>rs2_s)begin
-    assign comparisons_slti=1;
-  end
-  else if (rs1_s<rs2_s)begin
-    assign comparisons_slti=0;
-  end
+  // reg rs1_ne_rs2_ne;
+  // assign rs1_n2_rs2_ne=rs1_dec_2_exe_i[31]&{rs2_dec_2_exe_i[31]};
+
+  // if(rs1_dec_2_exe_i[31]&{rs2_dec_2_exe_i[31])begin
+  //   assign comparisons_slti= rs1_dec_2_exe_i[30:0]>rs2_dec_2_exe_i?1:0;
+  // end
+  // else if (~(rs1_dec_2_exe_i[31]&{rs2_dec_2_exe_i[31]))begin
+  //   assign comparisons_slti=rs1_dec_2_exe_i<rs2_dec_2_exe_i?1:0;
+  // end                     
+  // else if (rs1_dec_2_exe_i[31]>rs2_dec_2_exe_i[31])begin
+  //   assign comparisons_slti=1;
+  // end
+  // else if (rs1_dec_2_exe_i[31]<rs2_dec_2_exe_i[31])begin
+  //   assign comparisons_slti=0;
+  // end
 
   //LOAD&STORE
   wire [31:0]load_address;
   assign load_address=signed_imm_12?(rs1_dec_2_exe_i-imm_12[10:0]):(rs1_dec_2_exe_i+imm_12[10:0]);
   wire [31:0]store_address;
-  reg [11:0]offset_2;
-  reg mem_address_1;
+  wire [11:0]offset_2; 
+  wire mem_address_1;
   assign mem_address_1=rs1_dec_2_exe_i-imm_7[6:0];
-  reg mem_address_2;
+  wire mem_address_2;
   assign mem_address_2=rs1_dec_2_exe_i+imm_7[6:0];
 
   assign offset_2={imm_7,imm_5};
-  assign mem_address_o=signed_imm_7?mem_address_1:mem_address_2;
+  assign mem_address_o = sign_imm_7 ? mem_address_1:mem_address_2;
 
   wire rs1_less_rs2;
   assign rs1_less_rs2=rs1_dec_2_exe_i<rs2_dec_2_exe_i?1:0;
@@ -203,7 +207,7 @@ module exe_alu(
   wire flush_from_exe_4;    //BLTU
   wire flush_from_exe_5;    //BGE
   wire flush_from_exe_6;    //BGEU
-  reg flush_from_exe_d;
+  wire flush_from_exe_d;
   assign flush_from_exe_1=((opcode_dec_2_exe_i==BEQ)&(rs1_dec_2_exe_i==rs2_dec_2_exe_i))?1:0;
   assign flush_from_exe_2=((opcode_dec_2_exe_i==BNE)&(rs1_dec_2_exe_i!=rs2_dec_2_exe_i))?1:0;
   assign flush_from_exe_3=((opcode_dec_2_exe_i==BLT)&&((rs1_dec_2_exe_i[31] && ~rs2_dec_2_exe_i[31]) ||
@@ -220,9 +224,9 @@ module exe_alu(
   wire signed_imm_20;//20位立即数的符号位
   //wire [31:0]jump_address;
 
-  wire jump_jalr;
+  wire  [31:0]jump_jalr;
   assign jump_jalr=rs1_dec_2_exe_i+imm_12;
-  wire jump_jalr_negative;
+  wire  [31:0] jump_jalr_negative;
   assign jump_jalr_negative=rs1_dec_2_exe_i-imm_12;
   wire [15:0]signed_imm_12_16;
   assign signed_imm_12_16={16{sign_imm_12}};
@@ -235,7 +239,7 @@ module exe_alu(
 
   always@(posedge clk)begin
     if(rstl==0)begin
-      current_pc<=0;
+      //current_pc<=0;
       rd_data_exe_2_mem_o<=32'h00000000;
     end
     case(opcode_dec_2_exe_i)
@@ -326,10 +330,10 @@ module exe_alu(
       LB:   rd_data_exe_2_mem_o<={signed_imm_12_24,load_address[7:0]};
       LBU:  rd_data_exe_2_mem_o<={24'b0,load_address[7:0]};
 
-      SW: store_data_o<=rs2_dec_2_exe_i;
-      SH: store_data_o<={16'b0,rs2_dec_2_exe_i[15:0]};
-      SB: store_data_o<={24'b0,rs2_dec_2_exe_i[7:0]};
-      default:begin flush_from_exe<=current_pc;
+      SW: men_data_o<=rs2_dec_2_exe_i;
+      SH: men_data_o<={16'b0,rs2_dec_2_exe_i[15:0]};
+      SB: men_data_o<={24'b0,rs2_dec_2_exe_i[7:0]};
+      default:begin 
        // current_pc<=current_pc;
         rd_data_exe_2_mem_o=32'h00000000;
       end 
