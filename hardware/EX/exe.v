@@ -1,4 +1,4 @@
-module exe(
+module exe_alu(
   input clk,
   input rstl,
   input [31:0]  opcode_dec_2_exe_i,           // 操作类型,位宽暂定
@@ -6,6 +6,7 @@ module exe(
   input [31:0]   rs2_dec_2_exe_i,             // 源操作数2
   input [10:0]   rd_dec_2_exe_i,              // 目的寄存器编号,位宽暂定
   input [31:0]  current_pc,                   //pc
+  input [19:0]  imm_20,                       //20位的立即数
   input [11:0]   imm_12,                      //12位的立即数，从译码阶段获得
   input [6:0]    imm_7,                       //7位的立即数
   input [4:0]    imm_5,                       //5位的立即数
@@ -13,23 +14,60 @@ module exe(
 
   output [31:0]  opcode_exe_2_mem_o,          // 操作类型,位宽暂定
   output [10:0]   rd_exe_2_mem_o,             // 目的寄存器编号,位宽暂定
-  output [31:0]   rd_data_exe_2_mem_o,        // 计算结果
+  output reg [31:0]   rd_data_exe_2_mem_o,        // 计算结果
   output [31:0]   mem_address_o,              //store指令存储的地址
   output [31:0]   men_data_o,                 //store指令存储的内容
   output          flush_from_exe,            // 分支跳转,对于分支指令，使用其计算得到的地址，默认是不跳转
-  output [31:0]   flush_addr_exe,             //正确的执行地址
+  output [31:0]   flush_addr_exe             //正确的执行地址
 
-  output flush_o,                               //当遇到0作除数
-  output flush_pc,                            //冲刷流水线时的PC
-  input flush_i                                  //分支预测错误冲刷流水线
+  //output flush_o,                               //当遇到0作除数，不要了
+  //output flush_pc,                            //冲刷流水线时的PC。不要了
+  //input flush_i                                  //分支预测错误冲刷流水线,暂且不加
+);
+  parameter LH = 0;
+  parameter LB = 1;
+  parameter LW = 2;
+  parameter LBU = 3;
+  parameter LHU = 4;
+  parameter SW = 5;
+  parameter SH = 6;
+  parameter SB = 7;
+  parameter SLL = 8;
+  parameter SLLI = 9;
+  parameter SRL = 10;
+  parameter SRLI = 11;
+  parameter SRA = 12;
+  parameter SRAI = 13;
+  parameter ADD = 14;
+  parameter ADDI = 15;
+  parameter SUB = 16;
+  parameter LUI = 17;
+  parameter AUIPC = 18;
+  parameter XOR = 19;
+  parameter XORI = 20;
+  parameter OR = 21;
+  parameter ORI = 22;
+  parameter AND = 23;
+  parameter ANDI = 24;
+  parameter SLT = 25;
+  parameter SLTI = 26;
+  parameter SLTU = 27;
+  parameter SLTIU = 28;
+  parameter BEQ = 29;
+  parameter BNE = 30;
+  parameter BLT = 31;
+  parameter BLTU = 32;
+  parameter BGE = 33;
+  parameter BGEU = 34;
+  parameter JAL = 35;
+  parameter JALR = 36;
 
-)
   wire sign_imm_12; //12位立即数的符号位
   wire [31:0]signed_imm_12; //12位立即数带符号位扩展
-  assign sign_imm_12=imm_12[11]:1?0;
-  assign signed_imm_12={20{signed_imm_12},imm_12};
+  assign sign_imm_12=imm_12[11]?1:0;
+  assign signed_imm_12={{20{signed_imm_12}},imm_12};
   wire sign_imm_7;//7位立即数的符号位
-  assign sign_imm_7=imm_7[6]:1?0;
+  assign sign_imm_7=imm_7[6]?1:0;
   
 
 
@@ -105,7 +143,7 @@ module exe(
   assign result_sum = rs1_dec_2_exe_i +rs2_complement;
   assign imm_12_complement=(~imm_12)+1;//12位的立即数取补码
   assign comparisons_sltu=(rs1_dec_2_exe_i<rs2_dec_2_exe_i)?1:0;
-  assign comparisons_slt=(opcode_dec_2_exe_i==SLT)？
+  assign comparisons_slt=(opcode_dec_2_exe_i==SLT)?
                            ((rs1_dec_2_exe_i[31] && ~rs2_dec_2_exe_i[31]) ||
                             (rs1_dec_2_exe_i[31] && ~rs2_dec_2_exe_i[31] && result_sum[31]) ||
                             (rs1_dec_2_exe_i[31] && rs2_dec_2_exe_i[31] && result_sum[31]))
@@ -124,26 +162,39 @@ module exe(
   // assign negative_posetive_com=negative_posetive:0:1;
   // assign comparisons_slti=(opcode_dec_2_exe_i==SLTI)?
 
-  if(rs1_dec_2_exe_i[31]|rs2_dec_2_exe_i[31])begin
-    comparisons_slti= rs1_dec_2_exe_i[30:0]>rs2_dec_2_exe_i；
+  wire rs1_s;
+  assign rs1_s={rs1_dec_2_exe_i[31]};
+  wire  rs2_s;
+  assign rs2_s={rs2_dec_2_exe_i[31]};
+
+  if(rs1_s&rs2_s)begin
+    assign comparisons_slti= rs1_dec_2_exe_i[30:0]>rs2_dec_2_exe_i?1:0;
   end
-  else if (~(rs1_dec_2_exe_i[31]|rs2_dec_2_exe_i[31]))begin
-    comparisons_slti=rs1_dec_2_exe_i<rs2_dec_2_exe_i;
+  else if (~(rs1_s&rs2_s))begin
+    assign comparisons_slti=rs1_dec_2_exe_i<rs2_dec_2_exe_i?1:0;
   end                     
-  else if (rs1_dec_2_exe_i[31]>rs2_dec_2_exe_i[31])begin
-    comparisons_slti=1;
+  else if (rs1_s>rs2_s)begin
+    assign comparisons_slti=1;
   end
-  else if (rs1_dec_2_exe_i[31]<rs2_dec_2_exe_i[31])begin
-    comparisons_slti=0;
+  else if (rs1_s<rs2_s)begin
+    assign comparisons_slti=0;
   end
 
   //LOAD&STORE
   wire [31:0]load_address;
   assign load_address=signed_imm_12?(rs1_dec_2_exe_i-imm_12[10:0]):(rs1_dec_2_exe_i+imm_12[10:0]);
   wire [31:0]store_address;
-  assign mem_address_o=signed_imm_7?(rs1_dec_2_exe_i-imm_7[6:0]):(rs1_dec_2_exe_i+imm_7[6:0]);
+  reg [11:0]offset_2;
+  reg mem_address_1;
+  assign mem_address_1=rs1_dec_2_exe_i-imm_7[6:0];
+  reg mem_address_2;
+  assign mem_address_2=rs1_dec_2_exe_i+imm_7[6:0];
 
+  assign offset_2={imm_7,imm_5};
+  assign mem_address_o=signed_imm_7?mem_address_1:mem_address_2;
 
+  wire rs1_less_rs2;
+  assign rs1_less_rs2=rs1_dec_2_exe_i<rs2_dec_2_exe_i?1:0;
 
   //branch
   wire flush_from_exe_1;    //BEQ
@@ -155,19 +206,38 @@ module exe(
   reg flush_from_exe_d;
   assign flush_from_exe_1=((opcode_dec_2_exe_i==BEQ)&(rs1_dec_2_exe_i==rs2_dec_2_exe_i))?1:0;
   assign flush_from_exe_2=((opcode_dec_2_exe_i==BNE)&(rs1_dec_2_exe_i!=rs2_dec_2_exe_i))?1:0;
-  assign flush_from_exe_3=((opcode_dec_2_exe_i==BLT)&(((rs1_dec_2_exe_i[31] && ~rs2_dec_2_exe_i[31]) ||
+  assign flush_from_exe_3=((opcode_dec_2_exe_i==BLT)&&((rs1_dec_2_exe_i[31] && ~rs2_dec_2_exe_i[31]) ||
                             (rs1_dec_2_exe_i[31] && ~rs2_dec_2_exe_i[31] && result_sum[31]) ||
                             (rs1_dec_2_exe_i[31] && rs2_dec_2_exe_i[31] && result_sum[31])))?1:0;//从其他地方拷贝过来，未验证
-  assign flush_from_exe_4=((opcode_dec_2_exe_i=BLTU)&(rs1_dec_2_exe_i<rs2_dec_2_exe_i))?1:0;
-  assign flush_from_exe_5=((opcode_dec_2_exe_i==BGE)&(!((rs1_dec_2_exe_i[31] && ~rs2_dec_2_exe_i[31]) ||
+  assign flush_from_exe_4=((opcode_dec_2_exe_i==BLTU)&&rs1_less_rs2)?1:0;
+  assign flush_from_exe_5=((opcode_dec_2_exe_i==BGE)&&(~((rs1_dec_2_exe_i[31] && ~rs2_dec_2_exe_i[31]) ||
                             (rs1_dec_2_exe_i[31] && ~rs2_dec_2_exe_i[31] && result_sum[31]) ||
-                            (rs1_dec_2_exe_i[31] && rs2_dec_2_exe_i[31] && result_sum[31])))?1:0;//从其他地方拷贝过来，未验证                          
-  assign flush_from_exe_6=((opcode_dec_2_exe_i==BGEU)&rs1_dec_2_exe_i>=rs2_dec_2_exe_i))?1:0;
+                            (rs1_dec_2_exe_i[31] && rs2_dec_2_exe_i[31] && result_sum[31]))))?1:0;//从其他地方拷贝过来，未验证                          
+  assign flush_from_exe_6=((opcode_dec_2_exe_i==BGEU)&(rs1_dec_2_exe_i>=rs2_dec_2_exe_i))?1:0;
   assign flush_from_exe_d=flush_from_exe_1|flush_from_exe_2|flush_from_exe_3|flush_from_exe_4|flush_from_exe_5|flush_from_exe_6;
 
+  //jump
+  wire signed_imm_20;//20位立即数的符号位
+  //wire [31:0]jump_address;
+
+  wire jump_jalr;
+  assign jump_jalr=rs1_dec_2_exe_i+imm_12;
+  wire jump_jalr_negative;
+  assign jump_jalr_negative=rs1_dec_2_exe_i-imm_12;
+  wire [15:0]signed_imm_12_16;
+  assign signed_imm_12_16={16{sign_imm_12}};
+  wire [23:0]signed_imm_12_24;
+  assign signed_imm_12_24={24{sign_imm_12}};
+  wire [30:0] rs1_great_rs2;
+  assign rs1_great_rs2={31{rs1_dec_2_exe_i>>rs2_dec_2_exe_i}};
+  wire [30:0] rs1_great_imm;
+  assign rs1_great_imm={30{rs1_dec_2_exe_i>>imm_5}};
+
   always@(posedge clk)begin
-    if(rstl==0)
-      current_pc<=current_pc;
+    if(rstl==0)begin
+      current_pc<=0;
+      rd_data_exe_2_mem_o<=32'h00000000;
+    end
     case(opcode_dec_2_exe_i)
       BEQ:begin
         if(flush_from_exe_1)begin
@@ -181,7 +251,7 @@ module exe(
           flush_addr_exe<=current_pc+offset;
         end
       end
-      BLT：begin
+      BLT:begin
        if(flush_from_exe_3)begin
           flush_from_exe<=flush_from_exe_d;
           flush_addr_exe<=current_pc+offset;  
@@ -205,18 +275,27 @@ module exe(
           flush_addr_exe<=current_pc+offset;  
         end  
       end
-      default: current_pc=current_pc;
-      endcase
-    end
-
-
-//logic
-  always@(posedge clk)
-    if(rstl==0)
-      rd_data_exe_2_mem_o<=32'h00000000;
-    case(opcode_dec_2_exe_i)
-
-      OR: rd_data_exe_2_mem_o<=rs1_dec_2_exe_i|rs2_dec_2_exe_i;
+      JAL:begin
+        if(signed_imm_20)begin
+          flush_addr_exe<=current_pc+imm_20[19:0];
+          rd_data_exe_2_mem_o<=current_pc+imm_20[19:0]+4;
+        end
+        if(~signed_imm_20)begin
+          flush_addr_exe<=current_pc-imm_20[19:0];
+          rd_data_exe_2_mem_o<=current_pc-imm_20[19:0]+4;  
+        end  
+        end
+      JALR:begin
+        if(signed_imm_12)begin
+          flush_addr_exe<={jump_jalr[31:1],1'b0};
+          rd_data_exe_2_mem_o<={jump_jalr[31:1],1'b0}+4;
+        end
+        if(~signed_imm_12)begin
+          flush_addr_exe<={jump_jalr_negative[31:1],0};
+          rd_data_exe_2_mem_o<={jump_jalr_negative[31:1],0}+4;
+        end
+      end
+      OR:   rd_data_exe_2_mem_o <= rs1_dec_2_exe_i|rs2_dec_2_exe_i;
       AND:  rd_data_exe_2_mem_o<=rs1_dec_2_exe_i&rs2_dec_2_exe_i;
       XOR:  rd_data_exe_2_mem_o<=rs1_dec_2_exe_i^rs2_dec_2_exe_i;
       ORI:  rd_data_exe_2_mem_o<=rs1_dec_2_exe_i|signed_imm_12;
@@ -225,38 +304,39 @@ module exe(
 
       ADD:  rd_data_exe_2_mem_o<=result_sum;
       SUB:  rd_data_exe_2_mem_o<=result_sum;
-      ADDI：  rd_data_exe_2_mem_o<=rs1_dec_2_exe_i+imm_12;
+      ADDI:  rd_data_exe_2_mem_o<=rs1_dec_2_exe_i+imm_12;
       AUIPC:  rd_data_exe_2_mem_o<=current_pc+imm_20<<12;
-      LUI：  rd_data_exe_2_mem_o<=imm_20<<12;
+      LUI: rd_data_exe_2_mem_o<=imm_20<<12;
 
       SLL:  rd_data_exe_2_mem_o<=rs1_dec_2_exe_i<<rs2_dec_2_exe_i;
       SLLI: rd_data_exe_2_mem_o<=rs1_dec_2_exe_i<<imm_5;
       SRL:  rd_data_exe_2_mem_o<=rs1_dec_2_exe_i>>rs2_dec_2_exe_i;
       SRLI: rd_data_exe_2_mem_o<=rs1_dec_2_exe_i>>imm_5;
-      SRA:  rd_data_exe_2_mem_o<={rs1_dec_2_exe_i[31],{rs1_dec_2_exe_i>>rs2_dec_2_exe_i}[30:0]};
-      SRAI: rd_data_exe_2_mem_o<={rs1_dec_2_exe_i[31],{rs1_dec_2_exe_i>>imm_5}[30:0]};
+      SRA:  rd_data_exe_2_mem_o<={rs1_dec_2_exe_i[31],{rs1_great_rs2}};
+      SRAI: rd_data_exe_2_mem_o<={rs1_dec_2_exe_i[31],{rs1_great_imm}};
 
-      SLTIU: rd_data_exe_2_mem_o<={32[comparisons_sltiu]};
-      SLT:  rd_data_exe_2_mem_o<={32[comparisons_slt]};
-      SLTI: rd_data_exe_2_mem_o<={32[comparisons_slti]};
-      SLTI: rd_data_exe_2_mem_o<={32[comparisons_slti]};
+      SLTIU: rd_data_exe_2_mem_o<={32{comparisons_sltiu}};
+      SLT:  rd_data_exe_2_mem_o<={32{comparisons_slt}};
+      SLTI: rd_data_exe_2_mem_o<={32{comparisons_slti}};
+      SLTI: rd_data_exe_2_mem_o<={32{comparisons_slti}};
 
-      LW: rd_data_exe_2_mem_o<={load_address};
-      LH: rd_data_exe_2_mem_o<={16[signed_imm_12],load_address[15:0]};
-      LHU:  rd_data_exe_2_mem_o<={16[0],load_address[15:0]};
-      LB: rd_data_exe_2_mem_o<={24{signed_imm_12},load_address[7:0]};
-      LBU:  rd_data_exe_2_mem_o<={24[0],load_address[7:0]};
+      LW:   rd_data_exe_2_mem_o<={load_address};
+      LH:   rd_data_exe_2_mem_o<={signed_imm_12_16,load_address[15:0]};
+      LHU:  rd_data_exe_2_mem_o<={16'b0,load_address[15:0]};
+      LB:   rd_data_exe_2_mem_o<={signed_imm_12_24,load_address[7:0]};
+      LBU:  rd_data_exe_2_mem_o<={24'b0,load_address[7:0]};
 
       SW: store_data_o<=rs2_dec_2_exe_i;
-      SH: store_data_o<={16[0],rs2_dec_2_exe_i[15:0]};
-      SB: store_data_o<={24[0],rs2_dec_2_exe_i[7:0]};
-
-      
-
-    default: rd_data_exe_2_mem_o=32'h00000000;
-    endcase
+      SH: store_data_o<={16'b0,rs2_dec_2_exe_i[15:0]};
+      SB: store_data_o<={24'b0,rs2_dec_2_exe_i[7:0]};
+      default:begin flush_from_exe<=current_pc;
+       // current_pc<=current_pc;
+        rd_data_exe_2_mem_o=32'h00000000;
+      end 
+      endcase
   end
-
-
-
 endmodule
+
+
+
+
