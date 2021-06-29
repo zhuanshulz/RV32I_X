@@ -1,10 +1,10 @@
 module exe(
   input clk,
   input rstl,
-  input [31:0]  opcode_dec_2_exe_i,           // 操作类型,位宽暂定
+  input [10:0]  opcode_dec_2_exe_i,           // 操作类型,位宽暂定
   input [31:0]   rs1_dec_2_exe_i,             // 源操作数1
   input [31:0]   rs2_dec_2_exe_i,             // 源操作数2
-  input [10:0]   rd_dec_2_exe_i,              // 目的寄存器编号,位宽暂定
+  input [4:0]   rd_dec_2_exe_i,              // 目的寄存器编号,位宽暂定
   input [31:0]  current_pc,                   //pc
   input [19:0]  imm_20,                       //20位的立即数
   input [11:0]   imm_12,                      //12位的立即数，从译码阶段获得
@@ -163,27 +163,28 @@ module exe(
   // assign negative_posetive_com=negative_posetive:0:1;
   // assign comparisons_slti=(opcode_dec_2_exe_i==SLTI)?
 
-  // reg rs1_s;
-  // assign rs1_s={rs1_dec_2_exe_i[31]};
-  // reg rs2_s;
-  // assign rs2_s={rs2_dec_2_exe_i[31]};
+  wire rs1_s;
+  assign rs1_s={rs1_dec_2_exe_i[31]};
+  wire rs2_s;
+  assign rs2_s={rs2_dec_2_exe_i[31]};
 
-  // reg rs1_ne_rs2_ne;
-  // assign rs1_n2_rs2_ne=rs1_dec_2_exe_i[31]&{rs2_dec_2_exe_i[31]};
-
-  // if(rs1_dec_2_exe_i[31]&{rs2_dec_2_exe_i[31])begin
-  //   assign comparisons_slti= rs1_dec_2_exe_i[30:0]>rs2_dec_2_exe_i?1:0;
-  // end
-  // else if (~(rs1_dec_2_exe_i[31]&{rs2_dec_2_exe_i[31]))begin
-  //   assign comparisons_slti=rs1_dec_2_exe_i<rs2_dec_2_exe_i?1:0;
-  // end                     
-  // else if (rs1_dec_2_exe_i[31]>rs2_dec_2_exe_i[31])begin
-  //   assign comparisons_slti=1;
-  // end
-  // else if (rs1_dec_2_exe_i[31]<rs2_dec_2_exe_i[31])begin
-  //   assign comparisons_slti=0;
-  // end
-
+  wire rs1_ne_rs2_ne;
+  assign rs1_n2_rs2_ne=rs1_dec_2_exe_i[31]&{rs2_dec_2_exe_i[31]};
+  
+  always @(*) begin
+  if(rs1_dec_2_exe_i[31]&{rs2_dec_2_exe_i[31])begin
+     comparisons_slti= rs1_dec_2_exe_i[30:0]>rs2_dec_2_exe_i?1:0;
+  end
+  else if (~(rs1_dec_2_exe_i[31]&{rs2_dec_2_exe_i[31]))begin
+     comparisons_slti=rs1_dec_2_exe_i<rs2_dec_2_exe_i?1:0;
+  end                     
+  else if (rs1_dec_2_exe_i[31]>rs2_dec_2_exe_i[31])begin
+     comparisons_slti=1;
+  end
+  else if (rs1_dec_2_exe_i[31]<rs2_dec_2_exe_i[31])begin
+     comparisons_slti=0;
+  end
+end
   //LOAD&STORE
   wire [31:0]load_address;
   assign load_address=signed_imm_12?(rs1_dec_2_exe_i-imm_12[10:0]):(rs1_dec_2_exe_i+imm_12[10:0]);
@@ -295,8 +296,8 @@ module exe(
           rd_data_exe_2_mem_o<={jump_jalr[31:1],1'b0}+4;
         end
         if(~signed_imm_12)begin
-          flush_addr_exe<={jump_jalr_negative[31:1],0};
-          rd_data_exe_2_mem_o<={jump_jalr_negative[31:1],0}+4;
+          flush_addr_exe<={jump_jalr_negative[31:1],1'b0};
+          rd_data_exe_2_mem_o<={jump_jalr_negative[31:1],1'b0}+4;
         end
       end
       OR:   rd_data_exe_2_mem_o <= rs1_dec_2_exe_i|rs2_dec_2_exe_i;
@@ -322,7 +323,7 @@ module exe(
       SLTIU: rd_data_exe_2_mem_o<={32{comparisons_sltiu}};
       SLT:  rd_data_exe_2_mem_o<={32{comparisons_slt}};
       SLTI: rd_data_exe_2_mem_o<={32{comparisons_slti}};
-      SLTI: rd_data_exe_2_mem_o<={32{comparisons_slti}};
+      SLTU: rd_data_exe_2_mem_o<={32{comparisons_sltu}};
 
       LW:   rd_data_exe_2_mem_o<={load_address};
       LH:   rd_data_exe_2_mem_o<={signed_imm_12_16,load_address[15:0]};
