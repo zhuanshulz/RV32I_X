@@ -65,7 +65,7 @@ module exe(
   wire sign_imm_12; //12位立即数的符号位
   wire [31:0]signed_imm_12; //12位立即数带符号位扩展
   assign sign_imm_12=imm_12[11]?1:0;
-  assign signed_imm_12={{20{signed_imm_12}},imm_12};
+  assign signed_imm_12={{20{imm_12[11]}},imm_12};
   wire sign_imm_7;//7位立即数的符号位
   assign sign_imm_7=imm_7[6]?1:0;
   
@@ -131,7 +131,7 @@ module exe(
   wire comparisons_sltiu;
   wire comparisons_slt;
   wire comparisons_sltu;
-  wire comparisons_slti;
+  reg comparisons_slti;
   // wire signed_rs1_rs2;
   // wire signed_rs1_rs2_negative;
   // wire rs1_rs2_compare;
@@ -140,9 +140,9 @@ module exe(
   // wire negative_posetive;
   // wire posetive_negetive_com;
   // wire negative_posetive_com;
-  wire imm_12_complement;
+  wire [11:0] imm_12_complement;
   assign result_sum = rs1_dec_2_exe_i +rs2_complement;
-  assign imm_12_complement=(~imm_12)+1;//12位的立即数取补码
+  assign imm_12_complement=(~imm_12)+1'b1;//12位的立即数取补码
   assign comparisons_sltu=(rs1_dec_2_exe_i<rs2_dec_2_exe_i)?1:0;
   assign comparisons_slt=(opcode_dec_2_exe_i==SLT)?
                            ((rs1_dec_2_exe_i[31] && ~rs2_dec_2_exe_i[31]) ||
@@ -169,13 +169,13 @@ module exe(
   assign rs2_s={rs2_dec_2_exe_i[31]};
 
   wire rs1_ne_rs2_ne;
-  assign rs1_n2_rs2_ne=rs1_dec_2_exe_i[31]&{rs2_dec_2_exe_i[31]};
+  assign rs1_ne_rs2_ne=rs1_dec_2_exe_i[31]&{rs2_dec_2_exe_i[31]};
   
   always @(*) begin
-  if(rs1_dec_2_exe_i[31]&{rs2_dec_2_exe_i[31])begin
-     comparisons_slti= rs1_dec_2_exe_i[30:0]>rs2_dec_2_exe_i?1:0;
+  if(rs1_dec_2_exe_i[31]&rs2_dec_2_exe_i[31])begin
+     comparisons_slti = (rs1_dec_2_exe_i[30:0]>rs2_dec_2_exe_i[30:0])?1'b1:1'b0;
   end
-  else if (~(rs1_dec_2_exe_i[31]&{rs2_dec_2_exe_i[31]))begin
+  else if (~(rs1_dec_2_exe_i[31])&(rs2_dec_2_exe_i[31]))begin
      comparisons_slti=rs1_dec_2_exe_i<rs2_dec_2_exe_i?1:0;
   end                     
   else if (rs1_dec_2_exe_i[31]>rs2_dec_2_exe_i[31])begin
@@ -336,7 +336,7 @@ end
       SB: men_data_o<={24'b0,rs2_dec_2_exe_i[7:0]};
       default:begin 
        // current_pc<=current_pc;
-        rd_data_exe_2_mem_o=32'h00000000;
+        rd_data_exe_2_mem_o <= 32'h00000000;
       end 
       endcase
   end

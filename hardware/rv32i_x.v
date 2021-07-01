@@ -78,7 +78,7 @@ dec dec_i0(
 );
 
 exe exe_i0(
-   clk(clk)
+   .clk(clk)
    ,.rstl(rst_n)
    ,.opcode_dec_2_exe_i( opcode_dec_o )   //opcode 的格式为[10]:代表instr[31:25]不为零。[9:7]代表funct3。[6:0]代表opcode。
    ,.rs1_dec_2_exe_i(rs1_data )
@@ -99,9 +99,9 @@ exe exe_i0(
    ,.flush_from_exe( )
    ,.flush_addr_exe( )
 
-   ,.flush_o( )
-   ,.flush_pc( )
-   ,.flush_i( )
+   // ,.flush_o( )
+   // ,.flush_pc( )
+   // ,.flush_i( )
 );
 
 endmodule

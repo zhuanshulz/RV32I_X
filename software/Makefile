@@ -1,5 +1,5 @@
 # 设置为你的工作路径，即RV32I_X的目录
-export RV_ROOT =  
+export RV_ROOT =  /home/damon_devil/RV32I_X
 
 # Allow tool override
 IVERILOG = iverilog
@@ -43,7 +43,7 @@ $(TEST_DIR)/sim_hex/main.elf: $(obj)			# 依赖的是.o文件 第一个命令是
 		-L$(GCC_TOOL_PATH)/$(GCC_PREFIX)/lib/ -lm -lc -lgcc -lgcov -T$(TEST_DIR)/include/link.ld -static
 
 $(TEST_DIR)/sim_hex/program.hex: $(TEST_DIR)/sim_hex/main.elf	# 依赖的是.elf文件 第一个命令是反汇编，生成.dump文件。第二、三个命令是将数据和指令部分抽出来形成.hex文件
-	$(GCC_PREFIX)-objdump -D $(TEST_DIR)/sim_hex/main.elf > $(TEST_DIR)/sim_hex/main.dump
+	$(GCC_PREFIX)-objdump -D $(TEST_DIR)/sim_hex/main.elf -M no-aliases,numeric > $(TEST_DIR)/sim_hex/main.dump
 	$(GCC_PREFIX)-objcopy -O verilog --only-section ".data*" --only-section ".rodata*" --only-section ".srodata*" $(TEST_DIR)/sim_hex/main.elf $(TEST_DIR)/sim_hex/data.hex
 	$(GCC_PREFIX)-objcopy -O verilog --only-section ".text*" --set-start=0x0 $(TEST_DIR)/sim_hex/main.elf $(TEST_DIR)/sim_hex/program.hex
 	python $(TEST_DIR)/sim_hex/transform_program.py
