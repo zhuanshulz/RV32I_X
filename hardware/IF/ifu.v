@@ -35,7 +35,8 @@ always @(posedge clk or negedge rst_n) begin
 end
 
 reg [31:0] instr_location_d1;
- 
+reg flush_from_exe_d1;
+
 always @(posedge clk or negedge rst_n) begin
     if(~rst_n)begin
         instr_location_d1 <= 'd0;
@@ -44,10 +45,11 @@ always @(posedge clk or negedge rst_n) begin
         instr_to_dec <= 'd0;
     end
     else begin
-        instr_location_d1 <= current_pc;
+        flush_from_exe_d1 <= flush_from_exe;
+        instr_location_d1 <= flush_from_exe?'d0:(current_pc);
 
-        instr_location <= instr_location_d1;
-        instr_to_dec <= iccm_rd_data;
+        instr_location <= flush_from_exe?'d0:instr_location_d1;
+        instr_to_dec <= (flush_from_exe|flush_from_exe_d1)?'d0:iccm_rd_data;
     end
 end
 

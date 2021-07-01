@@ -16,7 +16,8 @@ module dec (
 	output flush_from_dec,					//译码发现分支错误
 	output [31:0] flush_addr_dec 			//正确的执行地址
 );
-	
+	wire [31:0] instr_ifu_2_dec;
+	assign instr_ifu_2_dec = flush_from_exe?'d0:instr_ifu_2_dec_i;
 	assign flush_from_dec = 'b0;
 	assign flush_addr_dec = 'd0;
 
@@ -33,15 +34,15 @@ module dec (
 	reg [11:0] imm_12;
 
 	//取出32位指令的关键编码段
-	wire [6:0] rv32_opcode = instr_ifu_2_dec_i [6:0];
-	wire [19:0] imm1 = instr_ifu_2_dec_i [31:12];
-	wire [11:0] imm2 = instr_ifu_2_dec_i [31:20];
-	wire [4:0] rs1_num = instr_ifu_2_dec_i [19:15];
-	wire [4:0] rs2_num = instr_ifu_2_dec_i [24:20];
-	wire [2:0] funct3 = instr_ifu_2_dec_i [14:12];
-	wire [4:0] rd_num = instr_ifu_2_dec_i [11:7];
+	wire [6:0] rv32_opcode = instr_ifu_2_dec [6:0];
+	wire [19:0] imm1 = instr_ifu_2_dec [31:12];
+	wire [11:0] imm2 = instr_ifu_2_dec [31:20];
+	wire [4:0] rs1_num = instr_ifu_2_dec [19:15];
+	wire [4:0] rs2_num = instr_ifu_2_dec [24:20];
+	wire [2:0] funct3 = instr_ifu_2_dec [14:12];
+	wire [4:0] rd_num = instr_ifu_2_dec [11:7];
 
-
+	integer i=0;
 	always @(posedge clk or negedge rst_n) begin
 			if(~rst_n) begin
 				opcode_dec_2_exe_o <= 'd0;
@@ -49,18 +50,21 @@ module dec (
 				rs2_dec_2_exe_o <= 'd0;
 				imm <= 'd0;
 				rd_dec_2_exe_o <= 'd0;
+				for( i=0;i<32;i=i+1)begin
+					x[i] <= 'd0;
+				end
 			end
 			else begin
 				opcode_dec_2_exe_o <= opcode_dec_2_exe;
 				rs1_dec_2_exe_o <= x[rs1];
 				rs2_dec_2_exe_o <= x[rs2];
 				imm <= (|imm_20)?{imm_20}:((|imm_12)?{8'd0,imm_12}:20'd0);
-				rd_dec_2_exe_o <= rd_dec_2_exe;
-				instr_addr_dec_2_exe_o <= instr_addr_ifu_2_dec_i;
+				rd_dec_2_exe_o <= flush_from_exe?'d0:rd_dec_2_exe;
+				instr_addr_dec_2_exe_o <= flush_from_exe?'d0:instr_addr_ifu_2_dec_i;
 			end
 	end
 
-	assign identify = instr_ifu_2_dec_i[31:25] != 'd0;
+	assign identify = instr_ifu_2_dec[31:25] != 'd0;
 	assign opcode_dec_2_exe = { identify,funct3,rv32_opcode}; // 1+3+7
 
 	//I指令集译码
@@ -85,7 +89,7 @@ module dec (
 				7'b1101111 : 	// JAL
 					begin
 						rd_dec_2_exe = rd_num;
-						imm_20 = {instr_ifu_2_dec_i[31], instr_ifu_2_dec_i[19:12], instr_ifu_2_dec_i[20], instr_ifu_2_dec_i[30:21]};
+						imm_20 = {instr_ifu_2_dec[31], instr_ifu_2_dec[19:12], instr_ifu_2_dec[20], instr_ifu_2_dec[30:21]};
 					end 
 				7'b1100111:		// JALR
 					begin 
@@ -97,7 +101,7 @@ module dec (
 					begin 
 						rs1 = rs1_num;
 						rs2 = rs2_num;
-						imm_12 = {instr_ifu_2_dec_i[31], instr_ifu_2_dec_i[7], instr_ifu_2_dec_i[30:25], instr_ifu_2_dec_i[11:8]};
+						imm_12 = {instr_ifu_2_dec[31], instr_ifu_2_dec[7], instr_ifu_2_dec[30:25], instr_ifu_2_dec[11:8]};
 					end
 				
 				7'b0000011:		// LB/LH/LW/LBU/LHU
@@ -110,7 +114,7 @@ module dec (
 					begin 
 						rs1 = rs1_num;
 						rs2 = rs2_num;
-						imm_12 = {instr_ifu_2_dec_i[31:25], instr_ifu_2_dec_i[11:7]};
+						imm_12 = {instr_ifu_2_dec[31:25], instr_ifu_2_dec[11:7]};
 					end 
 				
 				7'b0010011:		// ADDI/SLTI/SLTIU/XORI/ORI/ANDI
@@ -120,7 +124,7 @@ module dec (
 								begin
 									rd_dec_2_exe = rd_num;
 									rs1 = rs1_num;
-									shamt = instr_ifu_2_dec_i [24:20];
+									shamt = instr_ifu_2_dec [24:20];
 								end
 							default:		// ADDI
 								begin

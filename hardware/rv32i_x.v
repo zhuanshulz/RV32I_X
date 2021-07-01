@@ -16,24 +16,11 @@ module rv32i_x(
    input 	 [31:0]  iccm_rd_data
 );
 
-   // always @(posedge clk or negedge rst_n) begin
-   //    if(~rst_n)begin
-   //       iccm_rd_addr <= 'd0;
-   //       iccm_rd_en <= 'd0;
-         
-   //       dccm_wr_en <= 'd0;
-   //       dccm_rd_en <= 'd0;
-   //       dccm_wr_addr <= 'd0;
-   //       dccm_rd_addr <= 'd0;
-   //       dccm_wr_data <= 'd0;
-   //    end
-   //    else begin
-   //       iccm_rd_addr <= iccm_rd_addr + 'd1;
-   //       iccm_rd_en <= 'b1;
-   //    end
-   // end
 wire [31:0] instr_location;
 wire [31:0] instr_to_dec;
+wire [31:0] flush_addr_exe;
+wire flush_from_exe;
+wire [31:0] men_data_o;
 
 ifu ifu_i0(
    .rst_n(rst_n)
@@ -46,10 +33,10 @@ ifu ifu_i0(
    ,.instr_location(instr_location)
    ,.instr_to_dec(instr_to_dec)
 
-   ,.flush_from_exe('b0)
-   ,.flush_addr_exe('d0)
-   ,.flush_from_dec('b0)
-   ,.flush_addr_dec('d0)
+   ,.flush_from_exe(flush_from_exe)
+   ,.flush_addr_exe(flush_addr_exe)
+   // ,.flush_from_dec('b0)
+   // ,.flush_addr_dec('d0)
 );
 
 wire [19:0] imm_20;
@@ -57,14 +44,16 @@ wire [31:0] rs1_data;
 wire [31:0] rs2_data;
 wire [4:0] rd_num;
 wire [31:0] instr_location_dec_o;
+wire [31:0] rd_data_exe_2_mem_o;
 wire [10:0] opcode_dec_o;
+wire [4:0]   rd_exe_2_mem;
 dec dec_i0(
    .rst_n(rst_n)
    ,.clk(clk)
 
    ,.instr_addr_ifu_2_dec_i(instr_location)
    ,.instr_ifu_2_dec_i(instr_to_dec)
-   ,.flush_from_exe( 'b0 )
+   ,.flush_from_exe( flush_from_exe )
 
    ,.opcode_dec_2_exe_o( opcode_dec_o )      //操作类型
    ,.rs1_dec_2_exe_o( rs1_data  )          //源操作数1
@@ -73,10 +62,11 @@ dec dec_i0(
    ,.rd_dec_2_exe_o(rd_num )
    ,.instr_addr_dec_2_exe_o( instr_location_dec_o )
 
-   ,.flush_from_dec( )
-   ,.flush_addr_dec( )
+   // ,.flush_from_dec( )
+   // ,.flush_addr_dec( )
 );
-
+wire load_valid;
+wire store_valid;
 exe exe_i0(
    .clk(clk)
    ,.rstl(rst_n)
@@ -92,16 +82,38 @@ exe exe_i0(
    ,.offset( imm_20[11:0])
    
    ,.opcode_exe_2_mem_o( )
-   ,.rd_exe_2_mem_o( )
-   ,.rd_data_exe_2_mem_o( )
-   ,.mem_address_o( )
-   ,.men_data_o( )
-   ,.flush_from_exe( )
-   ,.flush_addr_exe( )
+   ,.rd_exe_2_mem_o(rd_exe_2_mem )
+   ,.rd_data_exe_2_mem_o(rd_data_exe_2_mem_o )
+   ,.men_data_o( men_data_o )
+   ,.flush_from_exe(flush_from_exe )      // 异步复位
+   ,.flush_addr_exe(flush_addr_exe )
 
+   ,.load_valid( load_valid)
+   ,.store_valid( store_valid)
    // ,.flush_o( )
    // ,.flush_pc( )
    // ,.flush_i( )
 );
+
+lsu lsu_i0(
+   .clk(clk)
+   ,.rst_n(rst_n)
+
+   ,.rd_exe_2_mem_i (rd_exe_2_mem)
+   ,.rd_data_exe_2_mem_i( rd_data_exe_2_mem_o)
+   ,.men_data_i( men_data_o )
+   ,.load_valid(load_valid)
+   ,.store_valid(store_valid)
+   ,.dccm_wr_en_o(dccm_wr_en)
+   ,.dccm_rd_en_o(dccm_rd_en)
+   ,.dccm_wr_addr_o(dccm_wr_addr)
+   ,.dccm_rd_addr_o(dccm_rd_addr)
+   ,.dccm_wr_data_o(dccm_wr_data)
+   ,.dccm_rd_data_i(dccm_rd_data)
+
+   ,.rd_exe_2_mem_o()      // 这个接口返回给dec译码单元处理保存数据
+   ,.rd_data_exe_2_mem_o()
+);
+
 
 endmodule
