@@ -52,7 +52,7 @@ wire [10:0]    opcode_dec_o;
 wire [4:0]     rd_exe_2_mem;
 wire [4:0]     rd_mem_2_dec;
 wire [31:0]    rd_data_mem_2_dec;
-
+wire [4:0]     shamt;
 dec dec_i0(
    .rst_n(rst_n)
    ,.clk(clk)
@@ -72,6 +72,7 @@ dec dec_i0(
    ,.rd_dec_2_exe_o           ( rd_num )
    ,.instr_addr_dec_2_exe_o   ( instr_location_dec_o )
 
+   ,.shamt                    (shamt)
    // ,.flush_from_dec( )
    // ,.flush_addr_dec( )
 );
@@ -92,6 +93,7 @@ exe exe_i0(
    ,.imm_7( imm_20[11:5])
    ,.imm_5( imm_20[4:0])
    ,.offset( imm_20[11:0])
+   ,.shamt(shamt)
    
    ,.opcode_exe_2_mem_o(opcode_exe_2_mem )
    ,.rd_exe_2_mem_o(rd_exe_2_mem )

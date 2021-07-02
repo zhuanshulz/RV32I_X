@@ -16,7 +16,7 @@ module dec (
 	output reg [19:0] imm,						//立即书字段
 	output reg [4:0] rd_dec_2_exe_o,			//目的寄存器编号
 	output reg [31:0] instr_addr_dec_2_exe_o,
-
+	output reg [4:0] shamt,
 	output flush_from_dec,					//译码发现分支错误
 	output [31:0] flush_addr_dec 			//正确的执行地址
 
@@ -36,7 +36,6 @@ module dec (
 	wire [10:0] opcode_dec_2_exe; //操作类型
 	reg [4:0] rs1;
 	reg [4:0] rs2;
-	reg [4:0] shamt;
 	reg [19:0] imm_20;
 	reg [11:0] imm_12;
 
