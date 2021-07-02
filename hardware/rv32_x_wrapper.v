@@ -41,11 +41,12 @@ ccm ccm_i(
     .dccm_wr_en(dccm_wr_en),
     .dccm_rd_en(dccm_rd_en),
     .dccm_wr_addr(dccm_wr_addr),
-    .dccm_rd_addr(dccm_rd_addr),
+    // .dccm_wr_addr({2'b00,dccm_wr_addr[31:2]}),
+    .dccm_rd_addr({2'b00,dccm_rd_addr[31:2]}),
     .dccm_wr_data(dccm_wr_data),
     .dccm_rd_data(dccm_rd_data),
 
-    //ICCM ports
+    //ICCM ports        //地址好说是32位对齐的，但是数据就不一定了。
     .iccm_rd_addr({2'b00,iccm_rd_addr[31:2]}),
     .iccm_rd_en(iccm_rd_en),         
     .iccm_rd_data(iccm_rd_data)

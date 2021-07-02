@@ -6,6 +6,10 @@ module dec (
 	input [31:0] instr_addr_ifu_2_dec_i,    //输入的指令的地址
 	input flush_from_exe,                   //从执行单元来的分支信号
 	
+	input [4:0]	rd_mem_2_dec_i,
+	input [31:0] rd_data_mem_2_dec_i,
+
+	output rd_conflict,
 	output reg [10:0] opcode_dec_2_exe_o,       //操作类型
 	output reg [31:0] rs1_dec_2_exe_o, 			//源操作数1
 	output reg [31:0] rs2_dec_2_exe_o,			//源操作数2
@@ -15,9 +19,12 @@ module dec (
 
 	output flush_from_dec,					//译码发现分支错误
 	output [31:0] flush_addr_dec 			//正确的执行地址
+
 );
 	wire [31:0] instr_ifu_2_dec;
-	assign instr_ifu_2_dec = flush_from_exe?'d0:instr_ifu_2_dec_i;
+	// reg rst_n_d0;
+	// reg rst_n_d1;
+	assign instr_ifu_2_dec = (flush_from_exe | (~rst_n))?'d0:instr_ifu_2_dec_i;
 	assign flush_from_dec = 'b0;
 	assign flush_addr_dec = 'd0;
 
@@ -34,15 +41,34 @@ module dec (
 	reg [11:0] imm_12;
 
 	//取出32位指令的关键编码段
-	wire [6:0] rv32_opcode = instr_ifu_2_dec [6:0];
-	wire [19:0] imm1 = instr_ifu_2_dec [31:12];
-	wire [11:0] imm2 = instr_ifu_2_dec [31:20];
-	wire [4:0] rs1_num = instr_ifu_2_dec [19:15];
-	wire [4:0] rs2_num = instr_ifu_2_dec [24:20];
-	wire [2:0] funct3 = instr_ifu_2_dec [14:12];
-	wire [4:0] rd_num = instr_ifu_2_dec [11:7];
+	wire [6:0] rv32_opcode =instr_ifu_2_dec [6:0];
+	wire [19:0] imm1 = 		instr_ifu_2_dec [31:12];
+	wire [11:0] imm2 = 		instr_ifu_2_dec [31:20];
+	wire [4:0] rs1_num = 	instr_ifu_2_dec [19:15];
+	wire [4:0] rs2_num = 	instr_ifu_2_dec [24:20];
+	wire [2:0] funct3 = 	instr_ifu_2_dec [14:12];
+	wire [4:0] rd_num = 	instr_ifu_2_dec [11:7];
 
 	integer i=0;
+
+	reg [5*2-1:0] used_rd_order;
+
+	assign rd_conflict = ((((flush_from_exe?5'd0:rs1_num) == used_rd_order[5*1-1:0])
+						| ((flush_from_exe?5'd0:rs1_num) == used_rd_order[(5*2-1):(5*1)])) & (|rs1_num))
+						| (((flush_from_exe?5'd0:rs2_num) == used_rd_order[5*1-1:0])
+						| ((flush_from_exe?5'd0:rs2_num) == used_rd_order[(5*2-1):(5*1)])) & (|rs2_num);
+
+	// always @(posedge clk or negedge rst_n) begin
+	// 		if(~rst_n) begin
+	// 			rst_n_d0 <= 'd0;
+	// 			rst_n_d1 <= 'd0;
+	// 		end
+	// 		else begin
+	// 			rst_n_d0 <= rst_n;
+	// 			rst_n_d1 <= rst_n_d0;
+	// 		end
+	// end
+
 	always @(posedge clk or negedge rst_n) begin
 			if(~rst_n) begin
 				opcode_dec_2_exe_o <= 'd0;
@@ -50,21 +76,29 @@ module dec (
 				rs2_dec_2_exe_o <= 'd0;
 				imm <= 'd0;
 				rd_dec_2_exe_o <= 'd0;
+				used_rd_order <= 'd0;
+
 				for( i=0;i<32;i=i+1)begin
 					x[i] <= 'd0;
 				end
 			end
 			else begin
-				opcode_dec_2_exe_o <= opcode_dec_2_exe;
-				rs1_dec_2_exe_o <= x[rs1];
-				rs2_dec_2_exe_o <= x[rs2];
-				imm <= (|imm_20)?{imm_20}:((|imm_12)?{8'd0,imm_12}:20'd0);
-				rd_dec_2_exe_o <= flush_from_exe?'d0:rd_dec_2_exe;
-				instr_addr_dec_2_exe_o <= flush_from_exe?'d0:instr_addr_ifu_2_dec_i;
+				if(|rd_mem_2_dec_i)begin
+					x[rd_mem_2_dec_i] <= rd_data_mem_2_dec_i;
+				end
+
+
+				used_rd_order 			<= rd_conflict?(used_rd_order << 5):{used_rd_order[5*1-1:0],rd_dec_2_exe};
+				opcode_dec_2_exe_o 		<= rd_conflict?'d0:opcode_dec_2_exe;
+				rs1_dec_2_exe_o 		<= rd_conflict?'d0:(((rs1 == rd_mem_2_dec_i) && (|rd_mem_2_dec_i))?rd_data_mem_2_dec_i:x[rs1]);		// 写通
+				rs2_dec_2_exe_o 		<= rd_conflict?'d0:(((rs2 == rd_mem_2_dec_i) && (|rd_mem_2_dec_i))?rd_data_mem_2_dec_i:x[rs2]);		// write through
+				imm 					<= rd_conflict?'d0:((|imm_20)?{imm_20}:((|imm_12)?{8'd0,imm_12}:20'd0));
+				rd_dec_2_exe_o 			<= (flush_from_exe | rd_conflict)?5'd0:(rd_dec_2_exe);
+				instr_addr_dec_2_exe_o 	<= (flush_from_exe | rd_conflict)?'d0:instr_addr_ifu_2_dec_i;
 			end
 	end
 
-	assign identify = instr_ifu_2_dec[31:25] != 'd0;
+	assign identify = instr_ifu_2_dec[31:25] != 'd0;		// 用于区别不同的指令
 	assign opcode_dec_2_exe = { identify,funct3,rv32_opcode}; // 1+3+7
 
 	//I指令集译码

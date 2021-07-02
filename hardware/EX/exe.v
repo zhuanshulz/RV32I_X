@@ -5,7 +5,7 @@ module exe(
   input [31:0]   rs1_dec_2_exe_i,             // 源操作数1
   input [31:0]   rs2_dec_2_exe_i,             // 源操作数2
   input [4:0]   rd_dec_2_exe_i,              // 目的寄存器编号,位宽暂定
-  input [31:0]  current_pc,                   //pc
+  input [31:0]  current_pc_exe_i,                   //pc
   input [19:0]  imm_20,                       //20位的立即数
   input [11:0]   imm_12,                      //12位的立即数，从译码阶段获得
   input [6:0]    imm_7,                       //7位的立即数
@@ -15,7 +15,7 @@ module exe(
   output reg [10:0]  opcode_exe_2_mem_o,          // 操作类型,位宽暂定
   output reg [4:0]   rd_exe_2_mem_o,             // 目的寄存器编号,位宽暂定
   output reg [31:0]   rd_data_exe_2_mem_o,        // 计算结果,包括load/store的存储器地址。
-  output reg [31:0]   men_data_o,                 //store指令存储的内容
+  output reg [31:0]   mem_data_o,                 //store指令存储的内容
   output reg        flush_from_exe,            // 分支跳转,对于分支指令，使用其计算得到的地址，默认是不跳转
   output reg [31:0]   flush_addr_exe,             //正确的执行地址
 
@@ -239,18 +239,18 @@ end
 
   always@(posedge clk or negedge rstl)begin
     if(rstl==0)begin
-      //current_pc<=0;
+      //current_pc_exe_i<=0;
       rd_data_exe_2_mem_o<=32'h00000000;
       opcode_exe_2_mem_o <= 'd0;
       rd_exe_2_mem_o <= 'd0;
-      men_data_o <= 'd0;
+      mem_data_o <= 'd0;
       flush_from_exe <= 1'b0;
       load_valid <= 'b0;
       store_valid <= 'b0;
     end
     else begin
       flush_from_exe <= 1'b0;
-      men_data_o <= 'd0;
+      mem_data_o <= 'd0;
       rd_data_exe_2_mem_o<=32'h00000000;
       opcode_exe_2_mem_o <= opcode_dec_2_exe_i;
       rd_exe_2_mem_o <= rd_dec_2_exe_i;
@@ -261,66 +261,61 @@ end
       BEQ:begin
         if(rs1_dec_2_exe_i==rs2_dec_2_exe_i)begin
           flush_from_exe <= 1'b1;
-          flush_addr_exe <= current_pc+{{19{offset[11]}},offset,1'b0};
+          flush_addr_exe <= current_pc_exe_i+{{19{offset[11]}},offset,1'b0};
         end
       end
       BNE:begin
         if(rs1_dec_2_exe_i !=rs2_dec_2_exe_i)begin
           flush_from_exe <= 1'b1;
-          flush_addr_exe<=current_pc+{{19{offset[11]}},offset,1'b0};
+          flush_addr_exe<= current_pc_exe_i+{{19{offset[11]}},offset,1'b0};
         end
       end
       BLT:begin
        if(flush_from_exe_3)begin
           flush_from_exe <= 1'b0;
-          flush_addr_exe<=current_pc+{{19{offset[11]}},offset,1'b0};
+          flush_addr_exe<=current_pc_exe_i+{{19{offset[11]}},offset,1'b0};
         end
       end
       BLTU:begin
        if(flush_from_exe_4)begin
           flush_from_exe <= 1'b1;
-          flush_addr_exe<=current_pc+{{19{offset[11]}},offset,1'b0};
+          flush_addr_exe<=current_pc_exe_i+{{19{offset[11]}},offset,1'b0};
         end
       end    
       BGE:begin
        if(flush_from_exe_5)begin
           flush_from_exe <= 1'b1;
-          flush_addr_exe<=current_pc+{{19{offset[11]}},offset,1'b0};
+          flush_addr_exe<=current_pc_exe_i+{{19{offset[11]}},offset,1'b0};
         end  
       end
       BGEU:begin
        if(flush_from_exe_6)begin
           flush_from_exe <= 1'b1;
-          flush_addr_exe<=current_pc+{{19{offset[11]}},offset,1'b0};
+          flush_addr_exe<=current_pc_exe_i+{{19{offset[11]}},offset,1'b0};
         end  
       end
       JAL:begin
         flush_from_exe <= 1'b1;
-        flush_addr_exe <= current_pc + {{11{imm_20[19]}},imm_20,1'b0};
-        rd_data_exe_2_mem_o <= current_pc + 32'd4;
+        flush_addr_exe <= current_pc_exe_i + {{11{imm_20[19]}},imm_20,1'b0};
+        rd_data_exe_2_mem_o <= current_pc_exe_i + 32'd4;
         end
       JALR:begin
-        if(signed_imm_12[11])begin
-          flush_addr_exe<={jump_jalr[31:1],1'b0};
-          rd_data_exe_2_mem_o<={jump_jalr[31:1],1'b0}+ 32'd4;
-        end
-        if(~signed_imm_12[11])begin
-          flush_addr_exe<={jump_jalr_negative[31:1],1'b0};
-          rd_data_exe_2_mem_o<={jump_jalr_negative[31:1],1'b0}+ 32'd4;
-        end
+        flush_from_exe <= 1'b1;
+        flush_addr_exe <= rs1_dec_2_exe_i + {{20{imm_12[11]}},imm_12};
+        rd_data_exe_2_mem_o <= current_pc_exe_i + 32'd4;
       end
-      OR:   rd_data_exe_2_mem_o <= rs1_dec_2_exe_i|rs2_dec_2_exe_i;
-      AND:  rd_data_exe_2_mem_o<=rs1_dec_2_exe_i&rs2_dec_2_exe_i;
-      XOR:  rd_data_exe_2_mem_o<=rs1_dec_2_exe_i^rs2_dec_2_exe_i;
-      ORI:  rd_data_exe_2_mem_o<=rs1_dec_2_exe_i|signed_imm_12;
-      ANDI: rd_data_exe_2_mem_o<=rs1_dec_2_exe_i&signed_imm_12;
-      XORI: rd_data_exe_2_mem_o<=rs1_dec_2_exe_i^signed_imm_12;
+      OR:   rd_data_exe_2_mem_o <= rs1_dec_2_exe_i | rs2_dec_2_exe_i;
+      AND:  rd_data_exe_2_mem_o <= rs1_dec_2_exe_i & rs2_dec_2_exe_i;
+      XOR:  rd_data_exe_2_mem_o <= rs1_dec_2_exe_i ^ rs2_dec_2_exe_i;
+      ORI:  rd_data_exe_2_mem_o <= rs1_dec_2_exe_i | {{20{imm_12[11]}},imm_12};
+      ANDI: rd_data_exe_2_mem_o <= rs1_dec_2_exe_i & {{20{imm_12[11]}},imm_12};
+      XORI: rd_data_exe_2_mem_o <= rs1_dec_2_exe_i ^ {{20{imm_12[11]}},imm_12};
 
       ADD:  rd_data_exe_2_mem_o<=result_sum;
       SUB:  rd_data_exe_2_mem_o<=result_sum;
-      ADDI:  rd_data_exe_2_mem_o<=rs1_dec_2_exe_i+{20'd0,imm_12};
-      AUIPC:  rd_data_exe_2_mem_o<=current_pc+{12'd0,imm_20};
-      LUI: rd_data_exe_2_mem_o <= {12'd0,imm_20};
+      ADDI:  rd_data_exe_2_mem_o<=rs1_dec_2_exe_i+{{20{imm_12[11]}},imm_12};
+      AUIPC:  rd_data_exe_2_mem_o<=current_pc_exe_i+{{20{imm_12[11]}},imm_12};
+      LUI: rd_data_exe_2_mem_o <= {imm_20 , 12'd0};   // LUI load upper immediate
 
       SLL:  rd_data_exe_2_mem_o<=rs1_dec_2_exe_i<<rs2_dec_2_exe_i;
       SLLI: rd_data_exe_2_mem_o<=rs1_dec_2_exe_i<<imm_5;
@@ -358,17 +353,17 @@ end
       SW: begin 
         store_valid <= 'b1;
         rd_data_exe_2_mem_o <= rs1_dec_2_exe_i + {{20{imm_12[11]}},imm_12};
-        men_data_o<=rs2_dec_2_exe_i;
+        mem_data_o<=rs2_dec_2_exe_i;
       end
       SH: begin
         store_valid <= 'b1;
         rd_data_exe_2_mem_o <= rs1_dec_2_exe_i + {{20{imm_12[11]}},imm_12};
-        men_data_o<={16'b0,rs2_dec_2_exe_i[15:0]};
+        mem_data_o<={16'b0,rs2_dec_2_exe_i[15:0]};
       end
       SB: begin
         store_valid <= 'b1;
         rd_data_exe_2_mem_o <= rs1_dec_2_exe_i + {{20{imm_12[11]}},imm_12};
-        men_data_o<={24'b0,rs2_dec_2_exe_i[7:0]};
+        mem_data_o<={24'b0,rs2_dec_2_exe_i[7:0]};
       end
       default:begin 
         rd_data_exe_2_mem_o <= 32'h00000000;
@@ -379,7 +374,7 @@ end
         load_valid <= 'b0;
         store_valid <= 'b0;
         flush_from_exe <= 1'b0;
-        men_data_o <= 'd0;
+        mem_data_o <= 'd0;
         rd_data_exe_2_mem_o<=32'h00000000;
         opcode_exe_2_mem_o <= 'd0;
         rd_exe_2_mem_o <= 'd0;
