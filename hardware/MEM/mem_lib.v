@@ -7,7 +7,7 @@ module ccm_32_32
     input logic WE );
    
 
-   reg [31:0]   ram_core [0:65535]; // 16位地址宽度
+   reg [31:0]   ram_core [0:65535]; // 32位地址宽度
 
    always @(posedge CLK) begin
       if (WE) begin// for active high WE - must be specified by user

@@ -7,7 +7,7 @@
 	.extern main
 
 _start:
-	li	sp, 0x7f050000
+	li	sp, 0x0000fff0
 	j _call_main
 
 _finish:

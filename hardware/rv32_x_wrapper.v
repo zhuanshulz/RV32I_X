@@ -40,7 +40,7 @@ ccm ccm_i(
     //DCCM ports
     .dccm_wr_en(dccm_wr_en),
     .dccm_rd_en(dccm_rd_en),
-    .dccm_wr_addr(dccm_wr_addr),
+    .dccm_wr_addr({2'b00,dccm_wr_addr[31:2]}),
     // .dccm_wr_addr({2'b00,dccm_wr_addr[31:2]}),
     .dccm_rd_addr({2'b00,dccm_rd_addr[31:2]}),
     .dccm_wr_data(dccm_wr_data),

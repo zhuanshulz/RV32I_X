@@ -13,7 +13,7 @@ module dccm_mem(
 
 always @(posedge clk) begin
     if (rst_n) begin
-         if (dccm_wr_addr[31:0]==32'h7f030000 && dccm_wr_en) begin
+         if (dccm_wr_addr[31:0]==(32'h7f030000>>2) && dccm_wr_en) begin
             if(dccm_wr_data[7:0] == 8'h00) begin
                $display("\n current cycle:%d \n",tb_top.total_cycle);
             end
