@@ -16,7 +16,7 @@ module dec (
 	output reg [19:0] imm,						//立即书字段
 	output reg [4:0] rd_dec_2_exe_o,			//目的寄存器编号
 	output reg [31:0] instr_addr_dec_2_exe_o,
-	output reg [4:0] shamt,
+	output reg [4:0] shamt_o,
 	output flush_from_dec,					//译码发现分支错误
 	output [31:0] flush_addr_dec 			//正确的执行地址
 
@@ -52,10 +52,10 @@ module dec (
 
 	reg [5*2-1:0] used_rd_order;
 
-	assign rd_conflict = ((((flush_from_exe?5'd0:rs1_num) == used_rd_order[5*1-1:0])
-						| ((flush_from_exe?5'd0:rs1_num) == used_rd_order[(5*2-1):(5*1)])) & (|rs1_num))
-						| (((flush_from_exe?5'd0:rs2_num) == used_rd_order[5*1-1:0])
-						| ((flush_from_exe?5'd0:rs2_num) == used_rd_order[(5*2-1):(5*1)])) & (|rs2_num);
+	assign rd_conflict = ((((flush_from_exe?5'd0:rs1) == used_rd_order[5*1-1:0])
+						| ((flush_from_exe?5'd0:rs1) == used_rd_order[(5*2-1):(5*1)])) & (|rs1))
+						| (((flush_from_exe?5'd0:rs2) == used_rd_order[5*1-1:0])
+						| ((flush_from_exe?5'd0:rs2) == used_rd_order[(5*2-1):(5*1)])) & (|rs2);
 
 	// always @(posedge clk or negedge rst_n) begin
 	// 		if(~rst_n) begin
@@ -67,6 +67,7 @@ module dec (
 	// 			rst_n_d1 <= rst_n_d0;
 	// 		end
 	// end
+	reg [4:0] shamt;
 
 	always @(posedge clk or negedge rst_n) begin
 			if(~rst_n) begin
@@ -94,6 +95,7 @@ module dec (
 				imm 					<= rd_conflict?'d0:((|imm_20)?{imm_20}:((|imm_12)?{8'd0,imm_12}:20'd0));
 				rd_dec_2_exe_o 			<= (flush_from_exe | rd_conflict)?5'd0:(rd_dec_2_exe);
 				instr_addr_dec_2_exe_o 	<= (flush_from_exe | rd_conflict)?'d0:instr_addr_ifu_2_dec_i;
+				shamt_o					<= shamt;
 			end
 	end
 

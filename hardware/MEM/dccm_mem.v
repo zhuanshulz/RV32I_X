@@ -1,7 +1,10 @@
 module dccm_mem(
    input          clk,                                              // clock 
    input          rst_n,                                             
-                                                      
+
+   input    [1:0]  store_type,
+   input    [1:0]  store_offset,                                                      
+
    input          dccm_wr_en,                                        // write enable
    input          dccm_rd_en,                                        // read enable
    input  [31:0]  dccm_wr_addr,                        // write address
@@ -33,6 +36,8 @@ ccm_32_32 dccm_d0(
                                             
     //DCCM ports
     .WE(dccm_wr_en),
+    .store_type(store_type),
+    .store_offset(store_offset),
    //  .dccm_rden(dccm_rden),
     .ADR(dccm_wr_en?dccm_wr_addr:dccm_rd_addr),
     .D(dccm_wr_data),

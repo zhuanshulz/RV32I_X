@@ -27,6 +27,8 @@ module ccm
    input  [31:0]  dccm_rd_addr,
    input  [31:0]  dccm_wr_data,
    output [31:0] dccm_rd_data,
+   input    [1:0]  store_type,
+   input    [1:0]  store_offset,
 
    //ICCM ports
    input  [31:0]  iccm_rd_addr,

@@ -19,6 +19,7 @@ module exe(
   output reg [31:0]   mem_data_o,                 //store指令存储的内容
   output reg        flush_from_exe,            // 分支跳转,对于分支指令，使用其计算得到的地址，默认是不跳转
   output reg [31:0]   flush_addr_exe,             //正确的执行地址
+  output reg [31:0]   current_pc_exe_o,
 
   output reg load_valid,
   output reg store_valid
@@ -81,8 +82,10 @@ module exe(
       flush_from_exe <= 1'b0;
       load_valid <= 'b0;
       store_valid <= 'b0;
+      current_pc_exe_o <= 'd0;
     end
     else begin
+      current_pc_exe_o <= current_pc_exe_i;
       flush_from_exe <= 1'b0;
       mem_data_o <= 'd0;
       rd_data_exe_2_mem_o<=32'h00000000;
@@ -107,8 +110,8 @@ module exe(
       BLT:begin
        if(((rs1_dec_2_exe_i[31] && (~rs2_dec_2_exe_i[31])) //rs1 <0; rs2 >0
                                     || ((rs1_dec_2_exe_i[31] && rs2_dec_2_exe_i[31] && (rs1_dec_2_exe_i > rs2_dec_2_exe_i))  //rs1 <0; rs2 <0
-                                          || (rs1_dec_2_exe_i[31] && ~rs2_dec_2_exe_i[31] && (rs1_dec_2_exe_i < rs2_dec_2_exe_i)))))begin
-          flush_from_exe <= 1'b0;
+                                          || ((~rs1_dec_2_exe_i[31]) && (~rs2_dec_2_exe_i[31]) && (rs1_dec_2_exe_i < rs2_dec_2_exe_i)))))begin //rs1>0 rs2>0
+          flush_from_exe <= 1'b1;
           flush_addr_exe<=current_pc_exe_i+{{19{offset[11]}},offset,1'b0};
         end
       end
@@ -121,7 +124,7 @@ module exe(
       BGE:begin
        if(~((rs1_dec_2_exe_i[31] && (~rs2_dec_2_exe_i[31])) //rs1 <0; rs2 >0
                                     || ((rs1_dec_2_exe_i[31] && rs2_dec_2_exe_i[31] && (rs1_dec_2_exe_i > rs2_dec_2_exe_i))  //rs1 <0; rs2 <0
-                                          || (rs1_dec_2_exe_i[31] && ~rs2_dec_2_exe_i[31] && (rs1_dec_2_exe_i < rs2_dec_2_exe_i)))))begin
+                                          || ((~rs1_dec_2_exe_i[31]) && (~rs2_dec_2_exe_i[31]) && (rs1_dec_2_exe_i < rs2_dec_2_exe_i)))))begin
           flush_from_exe <= 1'b1;
           flush_addr_exe<=current_pc_exe_i+{{19{offset[11]}},offset,1'b0};
         end  
@@ -151,8 +154,8 @@ module exe(
 
       ADD:    rd_data_exe_2_mem_o <= rs1_dec_2_exe_i + rs2_dec_2_exe_i;
       SUB:    rd_data_exe_2_mem_o <= rs1_dec_2_exe_i + ((~rs2_dec_2_exe_i) + 32'd1);
-      ADDI:   rd_data_exe_2_mem_o <= rs1_dec_2_exe_i+{{20{imm_12[11]}},imm_12};
-      AUIPC:  rd_data_exe_2_mem_o <= current_pc_exe_i+{{20{imm_12[11]}},imm_12};
+      ADDI:   rd_data_exe_2_mem_o <= rs1_dec_2_exe_i + {{20{imm_12[11]}},imm_12};
+      AUIPC:  rd_data_exe_2_mem_o <= current_pc_exe_i+ {{20{imm_12[11]}},imm_12};
       LUI:    rd_data_exe_2_mem_o <= {imm_20 , 12'd0};   // LUI load upper immediate
 
       SLL:  rd_data_exe_2_mem_o <= rs1_dec_2_exe_i << rs2_dec_2_exe_i;
@@ -165,11 +168,11 @@ module exe(
       SLTIU: rd_data_exe_2_mem_o  <= (rs1_dec_2_exe_i < {20'd0,imm_12}) ? 32'd1:32'd0;
       SLT:   rd_data_exe_2_mem_o  <= ((rs1_dec_2_exe_i[31] && (~rs2_dec_2_exe_i[31])) //rs1 <0; rs2 >0
                                     || ((rs1_dec_2_exe_i[31] && rs2_dec_2_exe_i[31] && (rs1_dec_2_exe_i > rs2_dec_2_exe_i))  //rs1 <0; rs2 <0
-                                          || (rs1_dec_2_exe_i[31] && ~rs2_dec_2_exe_i[31] && (rs1_dec_2_exe_i < rs2_dec_2_exe_i))))?32'd1:32'd0; //rs1 >0; rs2 >0
+                                          || ((~rs1_dec_2_exe_i[31]) && (~rs2_dec_2_exe_i[31]) && (rs1_dec_2_exe_i < rs2_dec_2_exe_i))))?32'd1:32'd0; //rs1 >0; rs2 >0
                                     
       SLTI:  rd_data_exe_2_mem_o  <= ((rs1_dec_2_exe_i[31] && (~imm_12[11])) //rs1 <0; imm >0
                                     || ((rs1_dec_2_exe_i[31] && imm_12[11] && (rs1_dec_2_exe_i > {{20{imm_12[11]}},imm_12}))  //rs1 <0; imm <0
-                                          || (rs1_dec_2_exe_i[31] && (~imm_12[11]) && (rs1_dec_2_exe_i < {{20{imm_12[11]}},imm_12}))))?32'd1:32'd0; //rs1 >0; imm >0
+                                          || ((~rs1_dec_2_exe_i[31]) && (~imm_12[11]) && (rs1_dec_2_exe_i < {{20{imm_12[11]}},imm_12}))))?32'd1:32'd0; //rs1 >0; imm >0
       SLTU:  rd_data_exe_2_mem_o  <= (rs1_dec_2_exe_i < rs2_dec_2_exe_i) ? 32'd1:32'd0;
 
       LW:   begin
@@ -222,6 +225,7 @@ module exe(
         opcode_exe_2_mem_o <= 'd0;
         rd_exe_2_mem_o <= 'd0;
         flush_addr_exe <= 'd0;
+        current_pc_exe_o <= 'd0;
       end
     end
   end

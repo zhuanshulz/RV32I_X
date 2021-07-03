@@ -9,6 +9,8 @@ module rv32i_x(
    output    [31:0]  dccm_rd_addr,
    output 	 [31:0]  dccm_wr_data,
    input 	 [31:0]  dccm_rd_data,
+   output    [ 1:0]  store_type,
+   output    [ 1:0]  store_offset,
 
    //ICCM ports
    output 	 [31:0]  iccm_rd_addr,
@@ -47,6 +49,7 @@ wire [31:0]    rs1_data;
 wire [31:0]    rs2_data;
 wire [4:0]     rd_num;
 wire [31:0]    instr_location_dec_o;
+wire [31:0]    instr_location_exe_o;
 wire [31:0]    rd_data_exe_2_mem_o;
 wire [10:0]    opcode_dec_o;
 wire [4:0]     rd_exe_2_mem;
@@ -72,7 +75,7 @@ dec dec_i0(
    ,.rd_dec_2_exe_o           ( rd_num )
    ,.instr_addr_dec_2_exe_o   ( instr_location_dec_o )
 
-   ,.shamt                    (shamt)
+   ,.shamt_o                    (shamt)
    // ,.flush_from_dec( )
    // ,.flush_addr_dec( )
 );
@@ -101,6 +104,7 @@ exe exe_i0(
    ,.mem_data_o( mem_data )
    ,.flush_from_exe(flush_from_exe )      // 异步复位
    ,.flush_addr_exe(flush_addr_exe )
+   ,.current_pc_exe_o(instr_location_exe_o)
 
    ,.load_valid( load_valid)
    ,.store_valid( store_valid)
@@ -116,9 +120,12 @@ lsu lsu_i0(
    ,.opcode_exe_2_mem_i    (opcode_exe_2_mem  )
    ,.rd_exe_2_mem_i        (rd_exe_2_mem        )
    ,.rd_data_exe_2_mem_i   (rd_data_exe_2_mem_o )
+   ,.current_pc_lsu_i      (instr_location_exe_o)
    ,.mem_data_i            ( mem_data           )
    ,.load_valid            (load_valid          )
    ,.store_valid           (store_valid         )
+   ,.store_type            (store_type          )
+   ,.store_offset          (store_offset        )
    ,.dccm_wr_en_o          (dccm_wr_en          )
    ,.dccm_rd_en_o          (dccm_rd_en          )
    ,.dccm_wr_addr_o        (dccm_wr_addr        )

@@ -16,7 +16,6 @@ initial begin
     $readmemh("./benchmark/sim_hex/data_dccm.hex"    , rv32_x_top.ccm_i.dccm.dccm_d0.ram_core       );        // dccm
     #10 rst_n = 1;
     $display("\n simulation begin: \n");
-    // #10000  $finish();
 end
 
 initial begin

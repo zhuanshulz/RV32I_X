@@ -6,7 +6,7 @@ module lsu (
   input [4:0]   rd_exe_2_mem_i,             // 目的寄存器编号,位宽暂定
   input [31:0]   rd_data_exe_2_mem_i,        // 计算结果,包括load/store的存储器地址。
   input [31:0]   mem_data_i,                 //store指令存储的内容
-
+  input [31:0]  current_pc_lsu_i,
   input load_valid,
   input store_valid,
 
@@ -15,6 +15,9 @@ module lsu (
    output 	         dccm_rd_en_o,
    output 	 [31:0]  dccm_wr_addr_o,
    output    [31:0]  dccm_rd_addr_o,
+
+   output    [1:0]  store_type,
+   output    [1:0]  store_offset,
 
    output 	 [31:0]  dccm_wr_data_o,
    input 	 [31:0]  dccm_rd_data_i,
@@ -29,6 +32,9 @@ module lsu (
   parameter LBU = 3'b100;
   parameter LHU = 3'b101;
   
+  assign store_type = store_valid?(opcode_exe_2_mem_i[8:7] + 2'b01):2'b00;
+  assign store_offset = store_valid?(rd_data_exe_2_mem_i[1:0]):2'b00;
+
 assign dccm_wr_en_o = store_valid;
 assign dccm_rd_en_o = load_valid;
 
@@ -66,4 +72,20 @@ always @(posedge clk or negedge rst_n) begin
         rd_data_exe_2_mem <= rd_data_exe_2_mem_i;
     end
 end
+
+// integer trace_file;
+// initial begin
+//    trace_file = $fopen("trace.txt","w");
+// end
+
+// always @(posedge clk or negedge rst_n) begin
+//     if(~rst_n)begin
+        
+//     end
+//     else begin
+//         if(|current_pc_lsu_i)begin
+//             $fdisplay(trace_file,"pc:%x    cycles:%x",current_pc_lsu_i,tb_top.total_cycle);
+//         end
+//     end
+// end
 endmodule
