@@ -8,6 +8,9 @@
 
 _start:
 	li	sp, 0x0000fff0
+	li x3, 0x7f030000
+    addi x5, x0, 0x00
+    sb x5, 0(x3)
 	j _call_main
 
 _finish:
