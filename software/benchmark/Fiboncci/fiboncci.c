@@ -16,8 +16,10 @@ int fib(int m)
  } 
 int main()
 {
-	int n = 3;
+	int n = 10;
 	// scanf("%d",&n);
-	printf("%d",fib(n));
+	my_printf("fiboncci n num is: %d \n", n);
+	for(int i=0;i<n;i++)
+		my_printf(" %d ",fib(i));
 	return 0;
  } 

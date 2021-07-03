@@ -17,7 +17,7 @@ endif
 
 # Define test name，must in TEST_LIST
 ifeq ($(strip $(TEST)),)			# 如果TEST是空的，那么就定义TEST为以下的值。
-	TEST = HelloWorld
+	TEST = Fiboncci
 endif
 
 # CFLAGS for verilator generated Makefiles. Without -std=c++11 it complains for `auto` variables
