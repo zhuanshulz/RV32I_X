@@ -71,6 +71,8 @@ module exe(
   parameter JAL =   11'bx_xxx_1101111;
   parameter JALR =  11'bx_xxx_1100111;
 
+  parameter ECALL = 11'b0_xxx_1110011;
+  parameter EBREAK= 11'b1_xxx_1110011;
 
   always@(posedge clk or negedge rstl)begin
     if(rstl==0)begin
@@ -210,6 +212,13 @@ module exe(
         store_valid <= 'b1;
         rd_data_exe_2_mem_o <= rs1_dec_2_exe_i + {{20{imm_12[11]}},imm_12};
         mem_data_o<={24'b0,rs2_dec_2_exe_i[7:0]};
+      end
+
+      ECALL:begin
+        
+      end
+      EBREAK:begin
+        
       end
       default:begin 
         rd_data_exe_2_mem_o <= 32'h00000000;

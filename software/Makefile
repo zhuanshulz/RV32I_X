@@ -1,5 +1,5 @@
 # 设置为你的工作路径，即RV32I_X的目录
-export RV_ROOT =  /home/damon_devil/RV32I_X
+export RV_ROOT =  
 
 # Allow tool override
 IVERILOG = iverilog
@@ -8,7 +8,7 @@ GCC_TOOL_PATH = /opt/riscv/
 GCC_VERSION =10.2.0
 GCC_FLAGS = -march=rv32i -O3		# 题目基本要求是32位的整数和压缩指令
 
-TEST_LIST = HelloWorld Fiboncci Bubble
+TEST_LIST = HelloWorld Fiboncci Bubble Printf
 
 # Define the test program directory
 ifeq ($(strip $(TEST_DIR)),)
@@ -17,7 +17,7 @@ endif
 
 # Define test name，must in TEST_LIST
 ifeq ($(strip $(TEST)),)			# 如果TEST是空的，那么就定义TEST为以下的值。
-	TEST = Fiboncci
+	TEST = Bubble
 endif
 
 # CFLAGS for verilator generated Makefiles. Without -std=c++11 it complains for `auto` variables
@@ -57,4 +57,4 @@ run: $(TEST_DIR)/sim_hex/program.hex		# 依赖程序的二进制文件，启动�
 help:
 	@echo Make sure the environment variable RV_ROOT is set.
 	@echo Make sure RISC-V toolchain has been installed.
-	@echo Possible targets: verilator help clean all verilator-run program.hex
+	@echo Possible targets: help clean all run program.hex

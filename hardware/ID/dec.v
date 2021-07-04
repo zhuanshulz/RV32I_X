@@ -181,7 +181,7 @@ module dec (
 					end 
 				7'b1110011:		 // ECALL/ EBREAK
 					begin
-
+						
 					end 
 				default:begin
 					rd_dec_2_exe = 'd0;
