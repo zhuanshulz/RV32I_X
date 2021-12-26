@@ -69,6 +69,18 @@ module dec (
 	// end
 	reg [4:0] shamt;
 
+    integer trace_file;
+    
+	initial begin
+        trace_file = $fopen("trace.txt","w");
+    end
+
+	always @(posedge clk ) begin
+		if(|rd_mem_2_dec_i)begin
+			$fdisplay(trace_file, "%x  %x", rd_mem_2_dec_i, rd_data_mem_2_dec_i);
+		end
+	end
+
 	always @(posedge clk or negedge rst_n) begin
 			if(~rst_n) begin
 				opcode_dec_2_exe_o <= 'd0;

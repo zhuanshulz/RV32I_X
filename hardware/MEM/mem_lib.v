@@ -11,7 +11,11 @@ module ccm_32_32
    
 
    reg [31:0]   ram_core [0:65535]; // 32位地址宽度
-  
+  initial begin
+    for(integer i=0;i<=65535; i++)begin
+      ram_core[i] = 0;
+    end
+  end
   parameter SW =  2'b11;
   parameter SH =  2'b10;
   parameter SB =  2'b01;
